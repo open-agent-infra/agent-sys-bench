@@ -1,0 +1,15 @@
+client_mode: True
+service_impl: fastapi
+service_list:
+  - module_name: async_app
+    name: compute_total
+    ip: 127.0.0.1
+    port: 8003
+  - module_name: async_app
+    name: compute_total_async
+    ip: 127.0.0.1
+    port: 8003
+  - module_name: async_app
+    name: process_items_parallel
+    ip: 127.0.0.1
+    port: 8003

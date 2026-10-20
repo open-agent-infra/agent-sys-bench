@@ -1,0 +1,24 @@
+client_mode: True
+service_impl: fastapi
+service_list:
+  - module_name: example_app
+    name: multi_file_compute
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: example_app
+    name: single_file_compute
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: example_app
+    name: monitored_compute
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: example_app
+    name: create_context
+    ip: 127.0.0.1
+    port: 8001
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/module-bm

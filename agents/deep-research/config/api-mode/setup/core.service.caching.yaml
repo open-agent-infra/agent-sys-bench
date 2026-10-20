@@ -1,0 +1,23 @@
+# Sample configuration for LegoAgent Caching Service
+scheduling_policy: round_robin
+stateful_assignment_strategy: load_balanced
+instances:
+  - name: in_memory
+    backend: memory
+    enabled: true
+    default_ttl: 3600
+  - name: file_cache
+    backend: file
+    location: /tmp/legoagent_cache
+    enabled: true
+    default_ttl: 86400
+  - name: redis_cache
+    backend: redis
+    location: redis://localhost:6379/0  # or use redis_host/redis_port/redis_db
+    enabled: true
+    default_ttl: 3600
+    # Optional Redis-specific config:
+    # redis_host: localhost
+    # redis_port: 6379
+    # redis_db: 0
+    # redis_password: yourpassword

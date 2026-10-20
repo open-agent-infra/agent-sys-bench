@@ -1,0 +1,17 @@
+# Embedding Service Configuration -- API Mode
+#
+# Uses DashScope (OpenAI-compatible) remote API for embeddings instead of
+# local vLLM.  No GPU required.
+#
+# DashScope supports text-embedding-v3 via the OpenAI-compatible endpoint.
+
+service_name: embedding
+scheduling_policy: round_robin
+default_model: "text-embedding-v3"
+
+instances:
+  # DashScope OpenAI-compatible embedding API
+  - name: "dashscope:text-embedding-v3"
+    location: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    model: "text-embedding-v3"
+    api_key: "${OPENAI_API_KEY}"

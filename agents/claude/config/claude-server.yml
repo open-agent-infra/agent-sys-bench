@@ -1,0 +1,21 @@
+# Fast-service server config for the claude task runner.
+# Exposes run_task and run_terminal_bench_task as RPC endpoints on port 1703.
+
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1703
+
+service_list:
+  - module_name: agsbench_claude.run_task
+    name: run_task
+    ip: 0.0.0.0
+    port: 1703
+  - module_name: agsbench_claude.run_task
+    name: run_terminal_bench_task
+    ip: 0.0.0.0
+    port: 1703
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/claude/server

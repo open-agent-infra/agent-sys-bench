@@ -1,0 +1,82 @@
+##############################################################################
+# DeepResearch Benchmark -- Pure API-Only Mode
+#
+# ZERO local infrastructure: no firecrawl, no searxng, no redis, no vLLM,
+# no playwright-service.  Everything uses remote APIs:
+#   - LLM:       DashScope (OpenAI-compatible)
+#   - Embedding: DashScope (OpenAI-compatible)
+#   - Search:    Firecrawl remote API (https://api.firecrawl.dev)
+#   - VDB:       Simple in-memory
+#   - Caching:   File-based
+#
+# Only two containers: agent_server + loadgen.
+#
+# Usage:
+#   # 1. Run scripts/setup.sh and scripts/configure-api.sh first
+#   #    (writes OPENAI_API_KEY / FIRECRAWL_API_KEY to agents/deep-research/config/.env)
+#   # 2. bash scripts/1.prepare_data.sh && bash scripts/2.run.sh
+##############################################################################
+name: deep-research-benchmarking
+
+services:
+  agent_server:
+    image: ${LEGOAGENT_IMAGE:-deep-research:v1}
+    deploy:
+      resources:
+        limits:
+          cpus: ${AGENT_CPUS:-4.0}
+          memory: ${AGENT_MEMORY:-16G}
+    env_file:
+      - ${AGSBENCH_HOME}/agents/deep-research/config/.env
+    environment:
+      - TIKTOKEN_CACHE_DIR=/cache/tiktoken
+      - LEGO_AGENT_CONFIG_DIR=/config/setup
+      - LEGOAGENT_CACHE_HOME=/output/legoagent_cache
+      - LEGOAGENT_LOG_FILE=${LOG_FILE:-/output/agent.log}
+      - LEGOAGENT_LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - LEGOAGENT_DEFAULT_LLM=${LEGOAGENT_DEFAULT_LLM:-deepseek-v4-pro}
+      - LEGOAGENT_DEFAULT_EMBEDDING=${LEGOAGENT_DEFAULT_EMBEDDING:-text-embedding-v3}
+    volumes:
+      - ${AGSBENCH_HOME}/agents/deep-research/data:/data
+      - ${AGSBENCH_HOME}/benchmark/data/ai-search-deep-research/runs/cache:/cache
+      - ${AGSBENCH_HOME}/agents/deep-research/config/api-mode:/config
+      - ${AGSBENCH_HOME}/benchmark/data/ai-search-deep-research/runs/results/server:/output
+    working_dir: /workspace/legoAgent/scripts
+    command:
+      - python
+      - /workspace/legoAgent/scripts/launch_server.py
+      - --config
+      - /config/deployment/server.yaml
+    cap_add:
+      - SYS_PTRACE
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:20000/docs')"]
+      interval: 15s
+      start_period: 60s
+      timeout: 10s
+      retries: 5
+
+  loadgen:
+    image: agsbench-request:v1
+    deploy:
+      resources:
+        limits:
+          cpus: ${LOADGEN_CPUS:-4.0}
+          memory: ${LOADGEN_MEMORY:-8G}
+    volumes:
+      - ./.cache:/data/manifest:ro
+    working_dir: /workspace
+    command:
+      - "--scenario"
+      - "ai-search"
+      - --endpoint
+      - "http://agent_server:20000"
+      - --bm_file_path
+      - "/data/manifest/${DATASET:-hle}.txt"
+      - --bm_request_num
+      - "${REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${BENCHMARK_MODE:-one-by-one}"
+    depends_on:
+      agent_server:
+        condition: service_healthy

@@ -1,0 +1,160 @@
+name: claude-benchmarking
+
+services:
+  # === Anthropic-to-OpenAI proxy ============================================
+  # Claude Code CLI uses Anthropic SDK (/v1/messages) but DashScope only
+  # serves OpenAI-compatible API (/v1/chat/completions).  This proxy
+  # translates between the two.
+  anthropic-proxy:
+    image: claude:v1
+    container_name: anthropic-proxy
+    env_file:
+      - "${AGSBENCH_HOME}/agents/claude/config/.env"
+    environment:
+      # UPSTREAM_BASE_URL / UPSTREAM_API_KEY come from config/.env (env_file)
+      # so configure-api's values reach the proxy. Do NOT override them here
+      # with ${UPSTREAM_*} — that would read from the deployment .env / shell
+      # (where they are unset) and clobber the env_file value with empty.
+      PROXY_PORT: "8090"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/claude/scripts/anthropic_proxy.py:/workspace/claude/scripts/anthropic_proxy.py:ro"
+    command:
+      - python
+      - scripts/anthropic_proxy.py
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8090/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  claude-service:
+    image: claude:v1
+    container_name: claude-service
+    env_file:
+      - "${AGSBENCH_HOME}/agents/claude/config/.env"
+    environment:
+      # Point Claude CLI at the proxy (no /v1 — the SDK appends it).
+      ANTHROPIC_BASE_URL: "${ANTHROPIC_BASE_URL:-http://anthropic-proxy:8090}"
+      HOME: "/home/bench"
+      DISABLE_AUTOUPDATER: "1"
+      DISABLE_TELEMETRY: "1"
+      IS_SANDBOX: "1"
+    volumes:
+      # --- Artifact directories: written to runs/latest ---
+      - "${AGSBENCH_HOME}/benchmark/data/tool-rich-assistant-claude/runs/latest/tasks:/workspace/claude/output"
+      - "${AGSBENCH_HOME}/benchmark/data/tool-rich-assistant-claude/runs/latest/fast-service-monitor:/workspace/claude/.cache/claude"
+      # Claude session storage (WRITABLE — isolated from host .claude dir)
+      - "${AGSBENCH_HOME}/benchmark/data/tool-rich-assistant-claude/runs/latest/claude-sessions:/home/bench/.claude"
+      # --- Source and config ---
+      - "${AGSBENCH_HOME}/agents/claude/config:/workspace/claude/config"
+      - "${AGSBENCH_HOME}/agents/claude/scripts/claude_service.py:/workspace/claude/scripts/claude_service.py"
+      - "${AGSBENCH_HOME}/agents/claude/src/agsbench_claude/run_task.py:/workspace/claude/src/agsbench_claude/run_task.py"
+      - "${AGSBENCH_HOME}/agents/claude/src/agsbench_claude/config_loader.py:/workspace/claude/src/agsbench_claude/config_loader.py"
+      - "${AGSBENCH_HOME}/agents/claude/src/agsbench_claude/postprocess.py:/workspace/claude/src/agsbench_claude/postprocess.py"
+      # Task data (from scripts/1.prepare_data.sh). Mounted at the same path
+      # in the loadgen so manifest entries resolve identically in both.
+      - "${CLAUDE_DATA_DIR:-./.cache}:/data/tasks:ro"
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /home/bench/.claude/projects &&
+        mkdir -p /workspace/claude/output &&
+        mkdir -p /workspace/claude/.cache/claude &&
+        python scripts/claude_service.py
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1703/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    depends_on:
+      anthropic-proxy:
+        condition: service_healthy
+
+  claude-loadgen:
+    image: agsbench-request:v1
+    container_name: claude-loadgen
+    environment:
+      FSBENCH_NUM_THREADS: "${CLAUDE_CONCURRENCY:-4}"
+    volumes:
+      - "${CLAUDE_DATA_DIR:-./.cache}:/data/tasks:ro"
+    working_dir: /workspace
+    command:
+      - "--scenario"
+      - "tool-rich-assistant"
+      - --endpoint
+      - "http://claude-service:1703"
+      - --bm_file_path
+      - "/data/tasks/${CLAUDE_MANIFEST:-claude_tasks.txt}"
+      - --bm_request_num
+      - "${CLAUDE_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${CLAUDE_BM_MODE:-one-by-one}"
+      - --bm_rps
+      - "${CLAUDE_BM_RPS:-100}"
+      - --model
+      - "${CLAUDE_MODEL:-deepseek-v4-flash}"
+      - --effort
+      - "${CLAUDE_EFFORT:-}"
+    depends_on:
+      claude-service:
+        condition: service_healthy
+
+  # === Resource monitoring stack ============================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: claude-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --housekeeping_interval=5s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: claude-prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+      - --web.enable-lifecycle
+    ports:
+      - "${CLAUDE_PROMETHEUS_PORT:-9092}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: claude-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${CLAUDE_GRAFANA_PORT:-3002}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

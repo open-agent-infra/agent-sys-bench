@@ -1,0 +1,11 @@
+agent: pi_autoresearch
+output: benchmark/analysis/out/auto-research-pi-autoresearch
+
+[latency] available=True
+  n=1 mean=1072.57s p50=1072.57 p90=1072.57 p95=1072.57
+[breakdown] available=True
+  e2e_mean=1071.94s fractions={ LLM:0.28, Other:0.00, Sandbox:0.72 }
+[io] available=True
+  categories=['LLM', 'Sandbox'] n_total=112
+[tokens] available=True
+  totals={'input_tokens': 676087, 'output_tokens': 13126, 'cache_read_tokens': 627712, 'reasoning_tokens': 0} cache_rate=0.928

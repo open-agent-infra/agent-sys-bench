@@ -1,0 +1,11 @@
+agent: claude
+output: benchmark/analysis/out/tool-rich-assistant-claude
+
+[latency] available=True
+  n=2 mean=59.30s p50=59.30 p90=82.79 p95=85.72
+[breakdown] available=True
+  e2e_mean=59.30s fractions={ LLM:1.00, Sandbox:0.00 }
+[io] available=True
+  categories=['LLM', 'Sandbox'] n_total=45
+[tokens] available=True
+  totals={'input_tokens': 162846, 'output_tokens': 5325, 'cache_read_tokens': 119808, 'reasoning_tokens': 0} cache_rate=0.736

@@ -1,0 +1,62 @@
+# Prometheus config for the mini-swe-agent benchmark monitoring stack.
+#
+# We only want to monitor containers that belong to this benchmark — the
+# host runs other unrelated containers (webarena, shopping_admin, etc.)
+# that should NOT pollute the time-series store. cAdvisor itself scrapes
+# every container; the filter happens at ingest time via metric_relabel_configs.
+#
+# Containers we keep:
+#   mini-sweagent-service       — the fast-service orchestrator
+#   mini-sweagent-loadgen       — the load generator
+#   minisweagent-<hex8>         — per-task sandbox spawned by DockerEnvironment
+#   cadvisor / prometheus / grafana — the monitoring stack itself (so we can
+#                                     see its own overhead)
+
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+  external_labels:
+    bench: mini-swe-agent
+
+scrape_configs:
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['mini-sweagent-cadvisor:8080']
+    metric_relabel_configs:
+      # Drop the unlabelled root cgroup time series (id="/") and any
+      # cgroup-only series without a container name — they don't map to
+      # one of our containers.
+      - source_labels: [name]
+        regex: '^$'
+        action: drop
+      # Keep only our agent + sandbox containers (and the monitoring stack
+      # itself, so we can see its own overhead).
+      - source_labels: [name]
+        regex: '(mini-sweagent-(service|loadgen|cadvisor|prometheus|grafana)|minisweagent-[a-f0-9]{8})'
+        action: keep
+
+  # Remote cAdvisor (multi-node mode only). The sentinel target is
+  # substituted by scripts/4.run_benchmark.sh with the env host's
+  # `ip:port` (default cAdvisor port 8082 on the env host). In single-host
+  # mode the sentinel stays in place and Prometheus simply fails this
+  # target's scrapes — harmless, but inspect the "Targets" page if you
+  # see scrape errors. The `__MINI_SWE_REMOTE_CADVISOR__` marker is the
+  # exact string the script greps for; do not change it without updating
+  # 4.run_benchmark.sh.
+  - job_name: cadvisor-env
+    static_configs:
+      - targets: ['__MINI_SWE_REMOTE_CADVISOR__']  # MINI_SWE_REMOTE_CADVISOR
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: '^$'
+        action: drop
+      # Same keep-list as the local cAdvisor; the env host only spawns
+      # minisweagent-<hex8> sandboxes plus the env service container and
+      # its co-located cAdvisor.
+      - source_labels: [name]
+        regex: '(mini-sweagent-env|minisweagent-[a-f0-9]{8}|cadvisor-env)'
+        action: keep
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

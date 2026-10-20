@@ -1,0 +1,15 @@
+service_name: embedding
+scheduling_policy: round_robin
+default_model: "jinaai/jina-embeddings-v3"
+
+instances:
+  # OpenAI-compatible remote embedding service
+  - name: "vllm:jinaai/jina-embeddings-v3"
+    location: "127.0.0.1:8009"
+    model: "jinaai/jina-embeddings-v3"
+    api_key: "EMPTY"
+
+  # Local embedding service using sentence-transformers
+  # - name: "local:BAAI/bge-reranker-large"
+  #   location: "cuda:0"
+  #   model: "BAAI/bge-reranker-large"

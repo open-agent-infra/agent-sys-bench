@@ -1,0 +1,11 @@
+agent: webagent
+output: benchmark/analysis/out/browser-use-webagent
+
+[latency] available=True
+  n=2 mean=4.67s p50=4.67 p90=4.77 p95=4.78
+[breakdown] available=True
+  e2e_mean=4.67s fractions={ LLM:0.84, Sandbox:0.16 }
+[io] available=True
+  categories=['e2e'] n_total=4
+[tokens] available=True
+  totals={'input_tokens': 2213, 'output_tokens': 183, 'cache_read_tokens': 0, 'reasoning_tokens': 169} cache_rate=0.000

@@ -1,0 +1,30 @@
+# Env-side fast-service config (runs on <REMOTE_HOST> in multi-node mode).
+#
+# Owns the docker daemon and the cpuset pool. solve_instance is registered
+# in-process (because agsbench_mini_swe_agent imports request.py at startup)
+# but is intentionally NOT listed here, so fast-service treats it as a local
+# function: no HTTP endpoint, no client stub. Only env_* are reachable from
+# the network.
+
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1802
+
+service_list:
+  - module_name: agsbench_mini_swe_agent.env_service
+    name: env_create
+    ip: 0.0.0.0
+    port: 1802
+  - module_name: agsbench_mini_swe_agent.env_service
+    name: env_execute
+    ip: 0.0.0.0
+    port: 1802
+  - module_name: agsbench_mini_swe_agent.env_service
+    name: env_destroy
+    ip: 0.0.0.0
+    port: 1802
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/mini-swe-agent/env

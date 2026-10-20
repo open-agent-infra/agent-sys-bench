@@ -1,0 +1,1 @@
+{"id":1,"topic":"AI","language":"en","prompt":"What are the key differences between transformer and state-space model architectures?"}

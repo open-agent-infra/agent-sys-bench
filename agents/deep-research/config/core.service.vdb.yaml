@@ -1,0 +1,63 @@
+# VectorDB Service Configuration
+
+# Default collection settings
+default_collection: "default_collection"
+default_dim: 1024
+metric_type: "L2"
+
+# VectorDB instances
+instances:
+  # - name: "milvus:remote"
+  #   db_type: "milvus"
+  #   location: "localhost:19530" # Default Milvus server address
+  #   collection_name: "default_collection"
+  #   dim: 1024
+  #   metric_type: "L2"
+  #   index_params:
+  #     index_type: "IVF_FLAT"
+  #     params:
+  #       nlist: 128
+  #   search_params:
+  #     nprobe: 10
+  #   enabled: true
+
+  # - name: "milvus:lite"
+  #   db_type: "milvus_lite"
+  #   location: "./.cache/milvus_lite.db"
+  #   collection_name: "default_collection"
+  #   dim: 1024
+  #   metric_type: "L2"
+  #   index_params:
+  #     index_type: "IVF_FLAT"
+  #     params:
+  #       nlist: 128
+  #   search_params:
+  #     nprobe: 10
+  #   enabled: true
+
+  - name: "simple-1"
+    db_type: "simple"
+    collection_name: "simple-1"
+    dim: 1024
+    metric_type: "L2"
+    index_params:
+      index_type: "simple"
+    search_params: {}
+    enabled: true
+
+  # - name: "simple-2"
+  #   db_type: "simple"
+  #   collection_name: "simple-2"
+  #   dim: 1024
+  #   metric_type: "L2"
+  #   index_params:
+  #     index_type: "simple"
+  #   search_params: {}
+  #   enabled: true
+
+# Global settings
+scheduling_policy: "round_robin"
+# collection_assignment_strategy: "consistent_hashing"
+collection_assignment_strategy: "load_balanced"
+max_retries: 3
+timeout: 30.0

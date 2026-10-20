@@ -1,0 +1,7 @@
+{
+  "providers": {
+    "openai": {
+      "baseUrl": "http://localhost:4000/v1"
+    }
+  }
+}

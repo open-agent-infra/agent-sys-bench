@@ -1,0 +1,42 @@
+# Orchestrator-side fast-service config (runs on this host).
+#
+# solve_instance is hosted here; env_create/env_execute/env_destroy are
+# declared remote and routed to the env host at ${MINI_SWE_ENV_HOST}:${MINI_SWE_ENV_PORT}.
+# In single-host mode, leave MINI_SWE_REMOTE_ENV unset and the runner takes
+# the in-process DockerEnvironment path — the env_* entries below become
+# unused client stubs (harmless).
+#
+# Env-var expansion: fast-service's config loader uses os.path.expandvars on
+# string fields, so `${MINI_SWE_ENV_HOST}` is substituted from the process
+# env at config load time. The compose file injects these vars.
+
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1801
+
+service_list:
+  - module_name: agsbench_mini_swe_agent.request
+    name: solve_instance
+    ip: 0.0.0.0
+    port: 1801
+  - module_name: agsbench_mini_swe_agent.env_service
+    name: env_create
+    ip: ${MINI_SWE_ENV_HOST}
+    port: ${MINI_SWE_ENV_PORT}
+  - module_name: agsbench_mini_swe_agent.env_service
+    name: env_execute
+    ip: ${MINI_SWE_ENV_HOST}
+    port: ${MINI_SWE_ENV_PORT}
+  - module_name: agsbench_mini_swe_agent.env_service
+    name: env_destroy
+    ip: ${MINI_SWE_ENV_HOST}
+    port: ${MINI_SWE_ENV_PORT}
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./traces/mini-swe-agent/server
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: ./traces/mini-swe-agent/intermediate/server

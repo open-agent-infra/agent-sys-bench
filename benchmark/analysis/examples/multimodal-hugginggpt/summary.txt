@@ -1,0 +1,11 @@
+agent: hugginggpt
+output: benchmark/analysis/out/multimodal-hugginggpt
+
+[latency] available=True
+  n=2 mean=51.98s p50=51.98 p90=64.51 p95=66.08
+[breakdown] available=True
+  e2e_mean=51.98s fractions={ LLM:0.52, Model:0.48 }
+[io] available=True
+  categories=['LLM', 'Model', 'e2e'] n_total=28
+[tokens] available=True
+  totals={'input_tokens': 3776, 'output_tokens': 2347, 'cache_read_tokens': 0, 'reasoning_tokens': 0} cache_rate=0.000

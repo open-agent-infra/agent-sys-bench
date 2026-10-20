@@ -1,0 +1,37 @@
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1905
+service_list:
+  - module_name: agsbench_gui_agent.env_request
+    name: env_create
+    ip: 0.0.0.0
+    port: 1905
+  - module_name: agsbench_gui_agent.env_request
+    name: env_reset
+    ip: 0.0.0.0
+    port: 1905
+  - module_name: agsbench_gui_agent.env_request
+    name: env_step
+    ip: 0.0.0.0
+    port: 1905
+  - module_name: agsbench_gui_agent.env_request
+    name: env_get_obs
+    ip: 0.0.0.0
+    port: 1905
+  - module_name: agsbench_gui_agent.env_request
+    name: env_evaluate
+    ip: 0.0.0.0
+    port: 1905
+  - module_name: agsbench_gui_agent.env_request
+    name: env_close
+    ip: 0.0.0.0
+    port: 1905
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: /workspace/os_world/monitoring/os-world-env
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: /workspace/intermediate/os-world-env

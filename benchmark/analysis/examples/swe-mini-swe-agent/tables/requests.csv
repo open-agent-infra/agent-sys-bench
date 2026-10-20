@@ -1,0 +1,3 @@
+request_id,e2e_latency,success,n_steps,n_llm_calls,total_input_tokens,total_output_tokens,total_cost_usd,error
+django__django-14725,327.2159323692322,True,38,38,929834,13823,0.0,
+pytest-dev__pytest-10051,209.70552039146423,True,23,23,306123,9358,0.0,

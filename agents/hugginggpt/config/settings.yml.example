@@ -1,0 +1,19 @@
+app_name: "HuggingGPT"
+
+llm_model_task_planning: "deepseek-chat"
+openai_api_key_task_planning: "YOUR_DEEPSEEK_API_KEY"
+openai_base_url_task_planning: "https://api.deepseek.com/v1"
+
+llm_model_model_selection: "deepseek-chat"
+openai_api_key_model_selection: "YOUR_DEEPSEEK_API_KEY"
+openai_base_url_model_selection: "https://api.deepseek.com/v1"
+
+inference_mode: "local"
+models_server_url: "http://hugginggpt-models-server:7070"
+llm_model_model_inference: "deepseek-chat"
+openai_api_key_model_inference: "YOUR_DEEPSEEK_API_KEY"
+openai_base_url_model_inference: "https://api.deepseek.com/v1"
+
+llm_model_response_generation: "deepseek-chat"
+openai_api_key_response_generation: "YOUR_DEEPSEEK_API_KEY"
+openai_base_url_response_generation: "https://api.deepseek.com/v1"

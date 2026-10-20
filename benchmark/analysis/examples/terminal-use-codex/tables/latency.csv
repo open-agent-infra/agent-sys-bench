@@ -1,0 +1,4 @@
+request_id,call_id,parent_call_id,function_name,category,start_time,end_time,delay,delay_type,is_top_level
+hello-world,5f18cb9c-0617-4fa7-88ab-46f421045e4f,32c4d75d-1050-4da5-8eab-11b8aa7e78a7,agsbench_codex.terminal_bench_runner.env_execute_compose_up,Sandbox,1792399074.8973448,1792399075.5122664,0.6149215698242188,e2e,False
+hello-world,efc83057-c55a-4531-9dc1-08039e5373c1,32c4d75d-1050-4da5-8eab-11b8aa7e78a7,agsbench_codex.terminal_bench_runner.env_execute_tests,Sandbox,1792399086.411417,1792399101.4684458,15.057028770446777,e2e,False
+hello-world,32c4d75d-1050-4da5-8eab-11b8aa7e78a7,None,agsbench_codex.request.solve_terminal_bench,e2e,1792399074.8964818,1792399112.1748893,37.27840757369995,e2e,True

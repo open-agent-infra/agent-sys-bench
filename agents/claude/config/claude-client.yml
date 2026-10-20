@@ -1,0 +1,20 @@
+# Fast-service client config for the claude loadgen (compose mode).
+# In single-host mode, resolves claude-service via Docker DNS.
+
+client_mode: True
+service_impl: fastapi
+
+service_list:
+  - module_name: agsbench_claude.run_task
+    name: run_task
+    ip: ${CLAUDE_SERVICE_HOST:-claude-service}
+    port: ${CLAUDE_SERVICE_PORT:-1703}
+  - module_name: agsbench_claude.run_task
+    name: run_terminal_bench_task
+    ip: ${CLAUDE_SERVICE_HOST:-claude-service}
+    port: ${CLAUDE_SERVICE_PORT:-1703}
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/claude/client

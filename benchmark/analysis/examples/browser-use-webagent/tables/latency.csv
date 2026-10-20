@@ -1,0 +1,7 @@
+request_id,call_id,parent_call_id,function_name,category,start_time,end_time,delay,delay_type,is_top_level
+miniwob-0000,af0e0d61-449f-4406-a7a8-d91e7476e9b0,fef2d570-dece-4b56-8d44-b350d488d425,agsbench_webagent.runner.llm_pick_action_call,LLM,1792373012.646783,1792373015.0734162,2.42663311958313,e2e,False
+miniwob-0000,f1a86f58-0e80-44e2-815d-90a5f3d5f2ac,fef2d570-dece-4b56-8d44-b350d488d425,agsbench_webagent.runner.env_step_call,Sandbox,1792373015.0736802,1792373015.7939725,0.720292329788208,e2e,False
+miniwob-0000,fef2d570-dece-4b56-8d44-b350d488d425,None,agsbench_webagent.request.solve_task,e2e,1792373011.0553098,1792373015.8483093,4.792999505996704,e2e,True
+miniwob-0001,1fbd8b39-486d-4230-ba50-dfb47565066f,43048727-8b28-4349-9f6b-e1dcfe910413,agsbench_webagent.runner.llm_pick_action_call,LLM,1792373016.290868,1792373019.6418633,3.3509953022003174,e2e,False
+miniwob-0001,01dc6af3-f879-45eb-9276-8c503f22a0a8,43048727-8b28-4349-9f6b-e1dcfe910413,agsbench_webagent.runner.env_step_call,Sandbox,1792373019.6421998,1792373020.3717608,0.7295610904693604,e2e,False
+miniwob-0001,43048727-8b28-4349-9f6b-e1dcfe910413,None,agsbench_webagent.request.solve_task,e2e,1792373015.8611636,1792373020.41579,4.55462646484375,e2e,True

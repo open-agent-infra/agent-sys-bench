@@ -1,0 +1,11 @@
+agent: openclaw
+output: benchmark/analysis/out/office-work-openclaw
+
+[latency] available=True
+  n=1 mean=601.10s p50=601.10 p90=601.10 p95=601.10
+[breakdown] available=True
+  e2e_mean=596.46s fractions={ LLM:0.70, Sandbox:0.25, Search:0.05 }
+[io] available=True
+  categories=['LLM', 'Sandbox'] n_total=261
+[tokens] available=True
+  totals={'input_tokens': 5178810, 'output_tokens': 13063, 'cache_read_tokens': 5056512, 'reasoning_tokens': 0} cache_rate=0.976

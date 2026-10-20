@@ -1,0 +1,26 @@
+# OpenClaw sandbox config patch — Docker backend for the WildClawBench runner.
+#
+# Defines a "main-sandbox" agent that mirrors the default "main" agent but
+# runs tool calls inside a Docker container for filesystem/process isolation.
+#
+# Apply once with:
+#   cd /data/agent-sys-bench
+#   python3 -c "import yaml,json,sys; print(json.dumps(yaml.safe_load(sys.stdin)))" \
+#     < config/sandbox.yaml | openclaw config patch --stdin
+#
+# After patching, verify with:  openclaw sandbox explain --agent main-sandbox
+
+agents:
+  list:
+    - id: main-sandbox
+      name: WildClawBench Sandboxed Agent
+      workspace: /data/agent-sys-bench
+      sandbox:
+        mode: all
+        scope: session
+        backend: docker
+        workspaceAccess: rw
+        docker:
+          image: openclaw-sandbox:bookworm-slim
+          network: bridge
+          readOnlyRoot: false

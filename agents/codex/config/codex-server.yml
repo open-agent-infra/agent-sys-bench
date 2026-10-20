@@ -1,0 +1,17 @@
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1903
+service_list:
+  - module_name: agsbench_codex.request
+    name: solve_terminal_bench
+    ip: 0.0.0.0
+    port: 1903
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./traces/codex/server
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: ./traces/codex/intermediate/server

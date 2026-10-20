@@ -1,0 +1,2 @@
+data/sample_doc.html|Who developed the theory of relativity?
+data/sample_doc.html|What is the speed of light in a vacuum?

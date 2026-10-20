@@ -1,0 +1,28 @@
+# openclaw model config for the instrumented DeepSeek provider.
+#
+# Apply this with:
+#   cat openclaw/config/agsbench_openclaw.yaml | openclaw config patch --stdin
+#
+# The proxy must be running on http://127.0.0.1:1801 when openclaw makes
+# requests against this provider. The apiKey here is a dummy — the real
+# DeepSeek key is held server-side by the proxy (passed via DEEPSEEK_API_KEY
+# env var when launching scripts/serve_proxy.py).
+
+models:
+  mode: merge
+  providers:
+    deepseek-instrumented:
+      baseUrl: http://127.0.0.1:1801/v1
+      apiKey: sk-dummy-not-used-by-proxy
+      api: openai-completions
+      contextWindow: 1000000   # DeepSeek-V4-Flash supports 1M context per official docs
+      maxTokens: 8192
+      models:
+        - id: deepseek-v4-flash
+          name: DeepSeek v4 Flash (instrumented)
+          api: openai-completions
+          baseUrl: http://127.0.0.1:1801/v1
+          contextWindow: 131000
+          maxTokens: 8192
+          input: [text]
+          cost: {input: 0.14, output: 0.28, cacheRead: 0, cacheWrite: 0}

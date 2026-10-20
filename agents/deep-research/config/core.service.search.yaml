@@ -1,0 +1,127 @@
+# Example configuration for core.service.search
+scheduling_policy: round_robin
+default_engine: tavily
+instances:
+  - name: tavily:default
+    engine: tavily
+    api_key: ${TAVILY_API_KEY}
+    enabled: true
+    group_name: default
+    tags: [tavily]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/tavily" # Optional, specify if needed
+      tags: [tavily]
+  - name: arxiv:default
+    engine: arxiv
+    enabled: true
+    group_name: default
+    tags: [arxiv]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/arxiv" # Optional, specify if needed
+      tags: [arxiv]
+  - name: duckduckgo:default
+    engine: duckduckgo
+    enabled: true
+    group_name: default
+    tags: [duckduckgo]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/duckduckgo" # Optional, specify if needed
+      tags: [duckduckgo]
+  - name: wiki:default
+    engine: wiki
+    enabled: true
+    group_name: default
+    tags: [wiki]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/wiki" # Optional, specify if needed
+      tags: [wiki]
+  - name: perplexity:default
+    engine: perplexity
+    enabled: true
+    group_name: default
+    tags: [perplexity]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/perplexity" # Optional, specify if needed
+      tags: [perplexity]
+  - name: googlesearch:default
+    engine: googlesearch
+    enabled: true
+    group_name: default
+    tags: [googlesearch]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/googlesearch" # Optional, specify if needed
+      tags: [googlesearch]
+  - name: exa:default
+    engine: exa
+    enabled: true
+    group_name: default
+    tags: [exa]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/exa" # Optional, specify if needed
+      tags: [exa]
+  - name: linkup:default
+    engine: linkup
+    enabled: true
+    group_name: default
+    tags: [linkup]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/linkup" # Optional, specify if needed
+      tags: [linkup]
+  - name: serper:default
+    engine: serper
+    enabled: true
+    group_name: default
+    tags: [serper]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/serper" # Optional, specify if needed
+      tags: [serper]
+  - name: searxng:default
+    location: "http://127.0.0.1:8080"
+    engine: searxng
+    enabled: true
+    group_name: default
+    tags: [searxng]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/searxng" # Optional, specify if needed
+      tags: [searxng]
+  - name: dummy:default
+    engine: dummy
+    enabled: true
+    group_name: default
+    tags: [dummy]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600 # Cache TTL in seconds
+      location: "tmp/legoagent_cache/dummy" # Optional, specify if needed
+      tags: [dummy]

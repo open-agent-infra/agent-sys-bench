@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["pi-autoresearch-cadvisor:8080"]
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: "^(pi-autoresearch-.*|pi-autoresearch-cadvisor|pi-autoresearch-prometheus|pi-autoresearch-grafana)$"
+        action: keep

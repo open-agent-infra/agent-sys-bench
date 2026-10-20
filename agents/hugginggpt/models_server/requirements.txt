@@ -1,0 +1,15 @@
+accelerate==1.4.0
+datasets==3.2.0
+diffusers==0.32.2
+fastapi==0.115.8
+Pillow==11.1.0
+pydantic==2.10.6
+PyYAML==6.0.2
+PyYAML==6.0.2
+soundfile==0.13.1
+torch==2.5.1+cu124
+transformers==4.48.3
+uvicorn==0.34.0
+timm==1.0.15
+kornia==0.8.0
+kornia_rs==0.1.8

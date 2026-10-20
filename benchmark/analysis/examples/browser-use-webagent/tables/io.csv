@@ -1,0 +1,5 @@
+request_id,call_id,function_name,category,direction,bytes,tokens
+miniwob-0000,,agsbench_webagent.request.solve_task,e2e,input,314,0
+miniwob-0000,,agsbench_webagent.request.solve_task,e2e,output,236,0
+miniwob-0001,,agsbench_webagent.request.solve_task,e2e,input,318,0
+miniwob-0001,,agsbench_webagent.request.solve_task,e2e,output,240,0

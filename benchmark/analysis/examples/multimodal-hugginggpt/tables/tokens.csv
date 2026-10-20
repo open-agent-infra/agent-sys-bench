@@ -1,0 +1,5 @@
+request_id,call_id,function_name,category,model,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,reasoning_tokens,total_tokens,cost_usd
+73609f7f-cfb4-455e-8148-ca971a1bdb7d,,agsbench_hugginggpt.response_generation.response_generation,LLM,,336,669,0,0,0,0,0.0
+0d3ea0aa-090c-4acc-b597-b83353f054d3,,agsbench_hugginggpt.response_generation.response_generation,LLM,,336,452,0,0,0,0,0.0
+73609f7f-cfb4-455e-8148-ca971a1bdb7d,,agsbench_hugginggpt.task_planning.task_planning,LLM,,1552,676,0,0,0,0,0.0
+0d3ea0aa-090c-4acc-b597-b83353f054d3,,agsbench_hugginggpt.task_planning.task_planning,LLM,,1552,550,0,0,0,0,0.0

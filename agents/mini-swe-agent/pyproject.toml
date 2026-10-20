@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agsbench-mini-swe-agent"
+version = "0.1.0"
+description = "Benchmark wrapper around mini-swe-agent for AgentSysBench"
+authors = [
+    { name = "AgentSysBench contributors" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}

@@ -1,0 +1,7 @@
+# Exclude large image tarballs and download logs from build context
+.cache/shopping_admin_final_0719.tar
+.cache/wget_download.log
+.cache/wget_download.pid
+.cache/download.log
+monitoring/
+trajectories/

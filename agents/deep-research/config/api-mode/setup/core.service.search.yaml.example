@@ -1,0 +1,46 @@
+# Search Service Configuration -- API-Only Mode
+#
+# Uses Firecrawl remote API (https://api.firecrawl.dev) for search.
+# No local firecrawl/redis/playwright-service/searxng needed.
+# DuckDuckGo is also enabled as a fallback (no API key required).
+
+scheduling_policy: round_robin
+default_engine: firecrawl
+instances:
+  - name: firecrawl:remote
+    location: "https://api.firecrawl.dev"
+    engine: firecrawl
+    api_key: ${FIRECRAWL_API_KEY}
+    enabled: true
+    group_name: default
+    tags: [firecrawl]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600
+      location: "${LEGOAGENT_CACHE_HOME:-/output/legoagent_cache}/search/firecrawl"
+      tags: [firecrawl]
+
+  - name: duckduckgo:default
+    engine: duckduckgo
+    enabled: true
+    group_name: default
+    tags: [duckduckgo]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600
+      location: "${LEGOAGENT_CACHE_HOME:-/output/legoagent_cache}/search/duckduckgo"
+      tags: [duckduckgo]
+
+  - name: wiki:default
+    engine: wiki
+    enabled: true
+    group_name: default
+    tags: [wiki]
+    caching:
+      enabled: true
+      backend: file
+      default_ttl: 3600
+      location: "${LEGOAGENT_CACHE_HOME:-/output/legoagent_cache}/search/wiki"
+      tags: [wiki]

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agsbench-request"
+version = "0.1.0"
+description = "AgentSysBench workload package — unified loadgen + data preparation for all scenarios."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "requests>=2.28",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Scenario sub-directories use hyphens (not valid Python identifiers) so
+# they're loaded via importlib, not via normal import. Include them as
+# package data so they're copied into the installed package.
+[tool.setuptools.package-data]
+request = ["*/**"]

@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+  external_labels:
+    bench: os-world
+
+scrape_configs:
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: '^$'
+        action: drop
+      - source_labels: [name]
+        # Match our service/loadgen + the per-task QEMU-in-Docker containers
+        # spawned by desktop_env's docker provider (their naming pattern
+        # contains "osworld" — see desktop_env/providers/docker/provider.py).
+        regex: '(os-world-(service|loadgen)|.*osworld.*|cadvisor|prometheus|grafana)'
+        action: keep
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

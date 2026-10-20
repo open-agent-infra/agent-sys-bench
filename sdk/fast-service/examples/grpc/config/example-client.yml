@@ -1,0 +1,15 @@
+service_impl: grpc
+service_list:
+  - module_name: example_app
+    name: compute_total
+    ip: 127.0.0.1
+    port: 12000
+  - module_name: example_app
+    name: update_items
+    ip: 127.0.0.1
+    port: 12000
+  - module_name: example_app
+    name: async_compute_total
+    ip: 127.0.0.1
+    port: 12000
+client_mode: true

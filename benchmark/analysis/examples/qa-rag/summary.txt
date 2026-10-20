@@ -1,0 +1,11 @@
+agent: rag
+output: benchmark/analysis/out/qa-rag
+
+[latency] available=True
+  n=2 mean=10.25s p50=10.25 p90=12.60 p95=12.89
+[breakdown] available=True
+  e2e_mean=10.25s fractions={ Embedding:0.02, LLM:0.41, Other:0.00, Search:0.03, VecDB:0.54 }
+[io] available=True
+  categories=['Embedding', 'LLM', 'Other', 'Search', 'VecDB', 'e2e'] n_total=56
+[tokens] available=True
+  totals={'input_tokens': 830, 'output_tokens': 732, 'cache_read_tokens': 0, 'reasoning_tokens': 0} cache_rate=0.000

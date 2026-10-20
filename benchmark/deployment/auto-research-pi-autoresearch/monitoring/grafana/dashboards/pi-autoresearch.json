@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "title": "pi-autoresearch benchmark",
+    "uid": "pi-autoresearch",
+    "panels": [
+      {
+        "title": "Container CPU Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=~\"pi-autoresearch-.*\"}[1m])",
+            "legendFormat": "{{container_label_com_docker_compose_service}}"
+          }
+        ]
+      },
+      {
+        "title": "Container Memory Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=~\"pi-autoresearch-.*\"}",
+            "legendFormat": "{{container_label_com_docker_compose_service}}"
+          }
+        ]
+      }
+    ]
+  }
+}

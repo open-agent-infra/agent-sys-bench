@@ -1,0 +1,3 @@
+request_id,call_id,function_name,category,direction,bytes,tokens
+hello-world,,agsbench_codex.request.solve_terminal_bench,e2e,input,609,0
+hello-world,,agsbench_codex.request.solve_terminal_bench,e2e,output,177,0

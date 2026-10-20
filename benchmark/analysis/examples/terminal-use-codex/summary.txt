@@ -1,0 +1,11 @@
+agent: codex
+output: benchmark/analysis/out/terminal-use-codex
+
+[latency] available=True
+  n=1 mean=37.28s p50=37.28 p90=37.28 p95=37.28
+[breakdown] available=True
+  e2e_mean=37.28s fractions={ Sandbox:0.42, LLM:0.58 }
+[io] available=True
+  categories=['e2e'] n_total=2
+[tokens] available=True
+  totals={'input_tokens': 23818, 'output_tokens': 181, 'cache_read_tokens': 16384, 'reasoning_tokens': 55} cache_rate=0.688

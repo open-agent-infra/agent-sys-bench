@@ -1,0 +1,168 @@
+name: openclaw-benchmarking
+
+services:
+  openclaw-llm-proxy:
+    image: openclaw:v1
+    container_name: openclaw-llm-proxy
+    env_file:
+      - "${AGSBENCH_HOME}/agents/openclaw/config/.env"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/openclaw/.cache:/workspace/openclaw/.cache"
+    ports:
+      - "${OPENCLAW_LLM_PROXY_PORT:-1801}:1801"
+    command: python scripts/serve_proxy.py --port 1801
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1801/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  openclaw-search-proxy:
+    image: openclaw:v1
+    container_name: openclaw-search-proxy
+    profiles: ["search"]
+    env_file:
+      - "${AGSBENCH_HOME}/agents/openclaw/config/.env"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/openclaw/.cache:/workspace/openclaw/.cache"
+    ports:
+      - "${OPENCLAW_SEARCH_PROXY_PORT:-1802}:1802"
+    command: python scripts/serve_search_proxy.py --port 1802
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1802/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  openclaw-service:
+    image: openclaw:v1
+    container_name: openclaw-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - "${AGSBENCH_HOME}/agents/openclaw/config/.env"
+    environment:
+      OPENCLAW_SANDBOX: "${OPENCLAW_SANDBOX:-0}"
+      OPENCLAW_SANDBOX_MODE: "${OPENCLAW_SANDBOX_MODE:-}"
+      OPENCLAW_LLM_PROXY_URL: "http://openclaw-llm-proxy:1801"
+      OPENCLAW_SEARCH_PROXY_URL: "http://openclaw-search-proxy:1802"
+      OPENCLAW_ENV_HOST: "${OPENCLAW_ENV_HOST:-127.0.0.1}"
+      OPENCLAW_ENV_PORT: "${OPENCLAW_ENV_PORT:-1804}"
+      OPENCLAW_SSH_PROXY_HOST: "${OPENCLAW_SSH_PROXY_HOST:-}"
+      OPENCLAW_SSH_PROXY_KEY: "${OPENCLAW_SSH_PROXY_KEY:-/root/.ssh/id_rsa}"
+      VSANDBOX_ENDPOINT: "http://${OPENCLAW_ENV_HOST:-host.docker.internal}:${OPENCLAW_ENV_PORT:-1804}"
+      VSANDBOX_EXEC_CLIENT: "/workspace/openclaw/vsandbox_exec_client.py"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${AGSBENCH_HOME}/benchmark/data/office-work-openclaw/output:/workspace/openclaw/output"
+      - "${AGSBENCH_HOME}/agents/openclaw/.cache:/workspace/openclaw/.cache"
+      - "${AGSBENCH_HOME}/agents/openclaw/config:/workspace/openclaw/config"
+      - "${AGSBENCH_HOME}/agents/openclaw/sandbox_workspace:/workspace/openclaw/sandbox_workspace"
+      - "${AGSBENCH_HOME}/agents/openclaw/scripts/openclaw_service.py:/workspace/openclaw/scripts/openclaw_service.py"
+      - "${AGSBENCH_HOME}/agents/openclaw/vsandbox-plugin/index.js:/tmp/vsandbox-plugin-index.js:ro"
+      # SSH key for the multi-node SSH proxy only; /dev/null when unused.
+      - "${OPENCLAW_SSH_KEY_FILE:-/dev/null}:/root/.ssh/id_rsa:ro"
+      # Task data (from scripts/1.prepare_data.sh). Mounted at the same path
+      # in the loadgen so manifest entries resolve identically in both.
+      - "${OPENCLAW_DATA_DIR:-./.cache}:/data/tasks:ro"
+    command: bash -c "cp /tmp/vsandbox-plugin-index.js /workspace/openclaw/vsandbox-plugin/index.js 2>/dev/null; exec python scripts/openclaw_service.py"
+    depends_on:
+      openclaw-llm-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1803/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
+  openclaw-loadgen:
+    image: agsbench-request:v1
+    container_name: openclaw-loadgen
+    environment:
+      FSBENCH_NUM_THREADS: "${OPENCLAW_CONCURRENCY:-4}"
+    volumes:
+      - "${OPENCLAW_DATA_DIR:-./.cache}:/data/tasks:ro"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    working_dir: /workspace
+    command:
+      - "--scenario"
+      - "office-work"
+      - --endpoint
+      - "http://openclaw-service:1803"
+      - --bm_file_path
+      - "/data/tasks/${OPENCLAW_MANIFEST:-openclaw_tasks.txt}"
+      - --bm_request_num
+      - "${OPENCLAW_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${OPENCLAW_BM_MODE:-one-by-one}"
+      - --bm_rps
+      - "${OPENCLAW_BM_RPS:-100}"
+      - --model
+      - "${OPENCLAW_MODEL:-deepseek-instrumented/deepseek-v4-flash}"
+      - --sandbox
+      - "${OPENCLAW_SANDBOX:-0}"
+      - --sandbox_mode
+      - "${OPENCLAW_SANDBOX_MODE:-}"
+    depends_on:
+      openclaw-service:
+        condition: service_healthy
+
+  # === Resource monitoring stack ============================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: openclaw-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --housekeeping_interval=5s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: openclaw-prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+      - --web.enable-lifecycle
+    ports:
+      - "${OPENCLAW_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: openclaw-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${OPENCLAW_GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,32 @@
+models:
+  - model_name: facebook/detr-resnet-50
+    task: object-detection
+    batch_size: 4
+    device: 0
+  - model_name: Falconsai/nsfw_image_detection
+    task: image-classification
+    batch_size: 4
+    device: 2
+  - model_name: stabilityai/stable-diffusion-xl-refiner-1.0
+    task: image-to-image
+    batch_size: 1
+    device: 2
+  - model_name: briaai/RMBG-2.0
+    task: image-segmentation
+    batch_size: 4
+    device: 2
+  - model_name: nlpconnect/vit-gpt2-image-captioning
+    task: image-to-text
+    batch_size: 4
+    device: 3
+  - model_name: stabilityai/stable-diffusion-xl-base-1.0
+    task: text-to-image
+    batch_size: 1
+    device: 3
+  - model_name: dandelin/vilt-b32-finetuned-vqa
+    task: visual-question-answering
+    batch_size: 4
+    device: 3
+
+log_dir: ./.cache/monitor/hugginggpt_models_server/
+log_name: model_server_execution.log

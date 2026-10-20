@@ -1,0 +1,115 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "title": "Container CPU Usage",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\"openclaw-.*\"}[1m])",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Container Memory Usage",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{name=~\"openclaw-.*\"}",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Container Network I/O",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(container_network_receive_bytes_total{name=~\"openclaw-.*\"}[1m])",
+          "legendFormat": "{{name}} rx",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_network_transmit_bytes_total{name=~\"openclaw-.*\"}[1m])",
+          "legendFormat": "{{name}} tx",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Active Containers",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "count(container_memory_usage_bytes{name=~\"openclaw-.*\"} > 0)",
+          "legendFormat": "containers",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "openclaw",
+    "benchmark"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "title": "OpenClaw Benchmark",
+  "uid": "openclaw-bench",
+  "version": 1
+}

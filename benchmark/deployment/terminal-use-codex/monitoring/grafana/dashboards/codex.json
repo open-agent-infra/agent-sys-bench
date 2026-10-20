@@ -1,0 +1,26 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []}, "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0}, "id": 1,
+     "targets": [{"expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\"codex-.*\"}[1m])) * 100", "legendFormat": "{{name}}", "refId": "A"}],
+     "title": "CPU usage (% of single core) per container", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []}, "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0}, "id": 2,
+     "targets": [{"expr": "container_memory_usage_bytes{name=~\"codex-.*\"}", "legendFormat": "{{name}}", "refId": "A"}],
+     "title": "Memory usage per container", "type": "timeseries"}
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["codex"],
+  "templating": {"list": []},
+  "time": {"from": "now-30m", "to": "now"},
+  "timezone": "",
+  "title": "codex benchmark",
+  "uid": "codex",
+  "version": 1
+}

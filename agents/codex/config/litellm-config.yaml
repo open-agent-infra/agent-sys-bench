@@ -1,0 +1,39 @@
+# LiteLLM proxy config — exposes /v1/responses endpoint that codex 0.120+
+# requires, and translates each call to DashScope's /chat/completions.
+#
+# Mounted into the litellm-proxy service at /app/config.yaml.
+model_list:
+  - model_name: deepseek-v4-pro
+    litellm_params:
+      model: openai/deepseek-v4-pro
+      # OPENAI_API_KEY is loaded into the container from config/.env.
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: https://api.deepseek.com/v1
+      drop_params: true
+
+  - model_name: deepseek-chat
+    litellm_params:
+      model: openai/deepseek-chat
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: https://api.deepseek.com/v1
+      drop_params: true
+
+  - model_name: deepseek-reasoner
+    litellm_params:
+      model: openai/deepseek-reasoner
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: https://api.deepseek.com/v1
+      drop_params: true
+
+  - model_name: deepseek-v4-flash
+    litellm_params:
+      model: openai/deepseek-v4-flash
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: https://api.deepseek.com/v1
+      drop_params: true
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  # Allow codex's responses-API tool-calling probes to fall back to chat.
+  enable_responses_api: true

@@ -1,0 +1,26 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []}, "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0}, "id": 1,
+     "targets": [{"expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\"os-world-.*|.*osworld.*\"}[1m])) * 100", "legendFormat": "{{name}}", "refId": "A"}],
+     "title": "CPU usage", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []}, "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0}, "id": 2,
+     "targets": [{"expr": "container_memory_usage_bytes{name=~\"os-world-.*|.*osworld.*\"}", "legendFormat": "{{name}}", "refId": "A"}],
+     "title": "Memory usage", "type": "timeseries"}
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["os-world"],
+  "templating": {"list": []},
+  "time": {"from": "now-30m", "to": "now"},
+  "timezone": "",
+  "title": "os-world benchmark",
+  "uid": "os-world",
+  "version": 1
+}

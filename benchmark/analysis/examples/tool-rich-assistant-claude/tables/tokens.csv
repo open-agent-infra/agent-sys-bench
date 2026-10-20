@@ -1,0 +1,10 @@
+request_id,call_id,function_name,category,model,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,reasoning_tokens,total_tokens,cost_usd
+e23f8d,,llm_call,LLM,deepseek-v4-pro,16499,70,0,0,0,0,0.0
+e23f8d,,llm_call,LLM,deepseek-v4-pro,16619,149,16384,0,0,0,0.0
+e23f8d,,llm_call,LLM,deepseek-v4-pro,16817,86,16384,0,0,0,0.0
+e23f8d,,llm_call,LLM,deepseek-v4-pro,18367,3207,16384,0,0,0,0.0
+e23f8d,,llm_call,LLM,deepseek-v4-pro,21855,91,17408,0,0,0,0.0
+e23f8d,,llm_call,LLM,deepseek-v4-pro,22271,627,21504,0,0,0,0.0
+995b28,,llm_call,LLM,deepseek-v4-pro,16205,798,0,0,0,0,0.0
+995b28,,llm_call,LLM,deepseek-v4-pro,17043,105,15360,0,0,0,0.0
+995b28,,llm_call,LLM,deepseek-v4-pro,17170,192,16384,0,0,0,0.0

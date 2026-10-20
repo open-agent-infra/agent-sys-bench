@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: browsergym
+    orgId: 1
+    folder: browsergym
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

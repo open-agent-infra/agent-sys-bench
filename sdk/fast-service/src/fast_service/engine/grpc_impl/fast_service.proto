@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package fast_service;
+
+// Service definition for FastService
+service FastService {
+  // Generic RPC for handling any function call
+  rpc Call (CallRequest) returns (CallResponse);
+  
+  // Stream version for handling file transfers
+  rpc CallWithFiles (stream FileChunk) returns (stream FileChunk);
+  
+  // Async version of Call
+  rpc AsyncCall (CallRequest) returns (CallResponse);
+  
+  // Async version of CallWithFiles
+  rpc AsyncCallWithFiles (stream FileChunk) returns (stream FileChunk);
+}
+
+// Request message containing serialized function arguments
+message CallRequest {
+  string function_name = 1;
+  bytes args = 2;  // JSON serialized arguments
+  bytes kwargs = 3; // JSON serialized keyword arguments
+}
+
+// Response message containing serialized function result
+message CallResponse {
+  bytes result = 1;  // JSON serialized result
+  string error = 2;  // Error message if any
+}
+
+// Message for file transfer
+message FileChunk {
+  oneof data {
+    Metadata metadata = 1;
+    bytes content = 2;
+  }
+}
+
+// Metadata for file transfer
+message Metadata {
+  string function_name = 1;
+  bytes args = 2;
+  bytes kwargs = 3;
+  repeated string file_paths = 4;
+}

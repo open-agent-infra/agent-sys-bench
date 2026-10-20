@@ -1,0 +1,28 @@
+client_mode: True
+service_impl: fastapi
+service_list:
+  - module_name: agsbench_hugginggpt.task_planning
+    name: task_planning
+    ip: hugginggpt-coordinator
+    port: 20101
+  - module_name: agsbench_hugginggpt.model_selection
+    name: model_selection
+    ip: hugginggpt-coordinator
+    port: 20101
+  - module_name: agsbench_hugginggpt.model_inference
+    name: model_inference
+    ip: hugginggpt-coordinator
+    port: 20101
+  - module_name: agsbench_hugginggpt.response_generation
+    name: response_generation
+    ip: hugginggpt-coordinator
+    port: 20101
+  - module_name: agsbench_hugginggpt.hugginggpt_e2e
+    name: hugginggpt_e2e
+    ip: hugginggpt-coordinator
+    port: 20101
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/monitor/hugginggpt_client

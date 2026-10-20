@@ -1,0 +1,109 @@
+name: hugginggpt-benchmarking
+
+services:
+  hugginggpt-models-server:
+    image: hugginggpt_models_server:v1
+    container_name: hugginggpt-models-server
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "7070:7070"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/hugginggpt/config/models_server_config.yaml:/workspace/hugginggpt/config/models_server_config.yaml"
+      - "./.cache/images:/data/images:ro"
+      - "${AGSBENCH_HOME}/benchmark/data/multimodal-hugginggpt/public:/data/public/"
+      - "${AGSBENCH_HOME}/benchmark/data/multimodal-hugginggpt/monitoring/models_server:/workspace/hugginggpt/src/models_server/.cache/monitor"
+      - "${HF_HOME:-${HOME}/.cache/huggingface}:/mnt/data/huggingface"
+    environment:
+      - HF_HOME=/mnt/data/huggingface
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+    command:
+      - python
+      - models_server.py
+      - -f
+      - "/workspace/hugginggpt/config/models_server_config.yaml"
+      - --save_dir
+      - "/data/public/images"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7070/docs')"]
+      interval: 30s
+      start_period: 120s
+      timeout: 10s
+      retries: 10
+
+  hugginggpt-coordinator:
+    image: hugginggpt:v1
+    container_name: hugginggpt-coordinator
+    ports:
+      - "20101:20101"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/hugginggpt/config:/workspace/agsbench_hugginggpt/config"
+      - "${AGSBENCH_HOME}/benchmark/data/multimodal-hugginggpt/monitoring/coordinator:/workspace/agsbench_hugginggpt/.cache/monitor"
+      - "${AGSBENCH_HOME}/benchmark/data/multimodal-hugginggpt/public:/data/public/"
+      - "./.cache/images:/data/images:ro"
+      - "${AGSBENCH_HOME}/benchmark/data/multimodal-hugginggpt/traces:/workspace/agsbench_hugginggpt/.cache/intermediate"
+    environment:
+      - TRACE_LLM_INFERENCE=False
+    command: python scripts/launch_services.py
+    depends_on:
+      hugginggpt-models-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:20101/docs')"]
+      interval: 10s
+      start_period: 15s
+      timeout: 5s
+      retries: 5
+
+  hugginggpt-loadgen:
+    image: agsbench-request:v1
+    container_name: hugginggpt-loadgen
+    environment:
+      FSBENCH_NUM_THREADS: "1"
+    volumes:
+      - "./.cache:/data/manifest:ro"
+    working_dir: /workspace
+    command:
+      - --scenario
+      - "multimodal"
+      - --endpoint
+      - "http://hugginggpt-coordinator:20101"
+      - --bm_file_path
+      - "/data/manifest/hugginggpt_data.txt"
+      - --bm_request_num
+      - "${HUGGINGGPT_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${HUGGINGGPT_BM_MODE:-one-by-one}"
+    depends_on:
+      hugginggpt-coordinator:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    ports:
+      - "${HUGGINGGPT_PROMETHEUS_PORT:-9095}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+    ports:
+      - "${HUGGINGGPT_GRAFANA_PORT:-3004}:3000"
+    volumes:
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

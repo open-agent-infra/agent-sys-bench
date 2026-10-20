@@ -1,0 +1,18 @@
+# Fast-service client config for the openclaw loadgen (compose mode).
+# In single-host mode, resolves openclaw-service via Docker DNS.
+# In multi-node mode, OPENCLAW_SERVICE_HOST is set to host.docker.internal
+# and traffic is routed via SSH tunnel to the remote env host.
+
+client_mode: True
+service_impl: fastapi
+
+service_list:
+  - module_name: agsbench_openclaw.run_task
+    name: run_task
+    ip: ${OPENCLAW_SERVICE_HOST}
+    port: ${OPENCLAW_SERVICE_PORT}
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/openclaw/client

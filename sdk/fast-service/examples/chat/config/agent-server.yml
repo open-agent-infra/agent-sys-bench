@@ -1,0 +1,12 @@
+service_impl: fastapi
+ip: 127.0.0.1
+port: 7080
+service_list:
+  - module_name: chat_agent
+    name: chat_agent_generate
+    ip: 127.0.0.1
+    port: 7080
+  - module_name: azure_openai
+    name: openai_generate
+    ip: 127.0.0.1
+    port: 7070

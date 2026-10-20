@@ -1,0 +1,12 @@
+agent: deepresearch
+output: benchmark/analysis/out/ai-search-deep-research
+
+[latency] available=True
+  n=2 mean=334.24s p50=334.24 p90=445.16 p95=459.02
+[breakdown] available=True
+  e2e_mean=334.24s fractions={ LLM:0.89, Search:0.11 }
+  overlap=2.28x (concurrent sub-calls; fractions scaled to e2e)
+[io] available=True
+  categories=['LLM', 'Other', 'Search', 'e2e'] n_total=248
+[tokens] available=True
+  totals={'input_tokens': 1216886, 'output_tokens': 82439, 'cache_read_tokens': 0, 'reasoning_tokens': 0} cache_rate=0.000

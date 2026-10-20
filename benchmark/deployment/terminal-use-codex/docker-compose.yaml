@@ -1,0 +1,196 @@
+name: codex-benchmarking
+
+services:
+  codex-service:
+    image: codex:v1
+    container_name: codex-service
+    env_file:
+      - "${AGSBENCH_HOME}/agents/codex/config/.env"
+    environment:
+      CODEX_CPUSETS: "${CODEX_CPUSETS:-0-1,2-3,4-5,6-7}"
+      # Per-run artifact dir. MUST be mounted at the same host path below so
+      # the host docker daemon can bind-mount per-task subdirs (CODEX_HOME)
+      # into task containers. See terminal_bench_runner._compose_up.
+      CODEX_TB_RUN_DIR: "${AGSBENCH_HOME}/benchmark/data/terminal-use-codex/runs"
+      # terminal-bench task compose files reference these container-side log
+      # paths; the runner's env dict does not set CONTAINER_AGENT_LOGS_PATH,
+      # so provide it here (it flows through via os.environ in _compose_up).
+      T_BENCH_CONTAINER_LOGS_PATH: "/logs"
+      T_BENCH_CONTAINER_AGENT_LOGS_PATH: "/logs/agent"
+      # HOST-side absolute path where the service stages the codex binary
+      # at startup. Used as the source for `-v <host>:/usr/local/bin/codex`
+      # when spawning per-task containers — the bind-mount source MUST be
+      # a host path (the docker daemon runs on the host), not a path that
+      # only exists inside the service container.
+      CODEX_BIN_HOST_PATH: "${AGSBENCH_HOME}/agents/codex/.cache/codex_bin/codex"
+      # Codex runs inside each task's sandbox, which lives on that task's
+      # own compose network, not this one, so it reaches the proxy through
+      # the host's gateway address. We forward the resolved gateway here.
+      CODEX_PROXY_URL: "${CODEX_PROXY_URL:-http://host.docker.internal:4001/v1}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${AGSBENCH_HOME}/benchmark/data/terminal-use-codex/trajectories:/workspace/codex/trajectories"
+      - "${AGSBENCH_HOME}/benchmark/data/terminal-use-codex/traces:/workspace/codex/traces"
+      - "${AGSBENCH_HOME}/benchmark/data/terminal-use-codex/runs:${AGSBENCH_HOME}/benchmark/data/terminal-use-codex/runs"
+      - "${AGSBENCH_HOME}/agents/codex/.cache:/workspace/codex/.cache"
+      - "${AGSBENCH_HOME}/agents/codex/config:/workspace/codex/config"
+      - "${AGSBENCH_HOME}/agents/codex/scripts/codex_service.py:/workspace/codex/scripts/codex_service.py"
+      # TerminalBench task dirs staged by scripts/1.prepare_data.sh. The
+      # docker CLI in the service reads each task's build context from here.
+      - "./.cache/terminal-bench/original-tasks:/workspace/codex/tb-tasks:ro"
+    # CWD = /workspace/codex so fast-service monitor writes e2e_delay.csv
+    # to ./traces/codex/server, which IS bind-mounted to the host above.
+    working_dir: /workspace/codex
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - litellm-proxy
+    # Stage the codex binary into the bind-mounted .cache/codex_bin/ before
+    # starting the service. That directory IS visible to the host docker
+    # daemon, so per-task containers can mount the binary from it.
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /workspace/codex/.cache/codex_bin &&
+        cp /usr/local/bin/codex /workspace/codex/.cache/codex_bin/codex &&
+        chmod +x /workspace/codex/.cache/codex_bin/codex &&
+        exec python scripts/codex_service.py
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1903/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
+  codex-loadgen:
+    image: agsbench-request:v1
+    container_name: codex-loadgen
+    environment:
+      FSBENCH_NUM_THREADS: "${CODEX_CONCURRENCY:-4}"
+    volumes:
+      # Manifest written by scripts/1.prepare_data.sh
+      - "./.cache:/data/manifest:ro"
+    working_dir: /workspace
+    command:
+      - --scenario
+      - "terminal-use"
+      - --endpoint
+      - "http://codex-service:1903"
+      - --bm_file_path
+      - "/data/manifest/${CODEX_MANIFEST:-codex_data.txt}"
+      - --bm_request_num
+      - "${CODEX_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${CODEX_BM_MODE:-one-by-one}"
+      - --bm_rps
+      - "${CODEX_BM_RPS:-100}"
+      # 0 = each task's own max_agent_timeout_sec / max_test_timeout_sec
+      - --step_timeout
+      - "${CODEX_STEP_TIMEOUT:-0}"
+      - --test_timeout
+      - "${CODEX_TEST_TIMEOUT:-0}"
+    depends_on:
+      codex-service:
+        condition: service_healthy
+
+  # LiteLLM translation proxy: codex 0.120+ requires wire_api = "responses"
+  # against the OpenAI Responses API, which DeepSeek doesn't implement.
+  # LiteLLM exposes /v1/responses and translates each call to the underlying
+  # provider's chat-completions endpoint.
+  litellm-proxy:
+    image: ${LITELLM_IMAGE:-litellm-proxy:local}
+    container_name: codex-litellm-proxy
+    env_file:
+      - "${AGSBENCH_HOME}/agents/codex/config/.env"
+    environment:
+      LITELLM_LOG: "INFO"
+      # Only reachable inside the compose network (via codex-proxy).
+      LITELLM_MASTER_KEY: "${CODEX_LITELLM_MASTER_KEY:-sk-agsbench-codex-local}"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/codex/config/litellm-config.yaml:/app/config.yaml:ro"
+    command:
+      - litellm
+      - --config
+      - /app/config.yaml
+      - --port
+      - "4000"
+      - --host
+      - "0.0.0.0"
+
+  # Tiny FastAPI proxy that sits in FRONT of LiteLLM and scrubs codex's
+  # responses-API request body before forwarding. Strips tools[] entries
+  # whose `type` isn't "function" (DeepSeek's chat schema rejects
+  # `namespace`, `web_search_preview`, `file_search`, etc.). LiteLLM's
+  # own `litellm_settings.callbacks` are logging-only and don't mutate
+  # request bodies, so we need our own middleware here.
+  codex-proxy:
+    image: codex:v1
+    container_name: codex-proxy
+    environment:
+      LITELLM_UPSTREAM: "http://litellm-proxy:4000"
+      LITELLM_MASTER_KEY: "${CODEX_LITELLM_MASTER_KEY:-sk-agsbench-codex-local}"
+      PROXY_PORT: "5000"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/codex/scripts/codex_proxy.py:/workspace/codex/scripts/codex_proxy.py"
+    command: python /workspace/codex/scripts/codex_proxy.py
+    # Codex (running inside each task's sandbox, on that task's compose
+    # network) reaches the proxy via host.docker.internal:4001.
+    ports:
+      - "${CODEX_LITELLM_PORT:-4001}:5000"
+    depends_on:
+      - litellm-proxy
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --housekeeping_interval=5s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+      - --web.enable-lifecycle
+    ports:
+      - "${CODEX_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${CODEX_GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

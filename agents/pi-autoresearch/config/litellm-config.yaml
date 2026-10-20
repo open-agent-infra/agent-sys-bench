@@ -1,0 +1,13 @@
+model_list:
+  - model_name: deepseek-v4-pro
+    litellm_params:
+      model: deepseek/deepseek-v4-pro
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: deepseek-v3
+    litellm_params:
+      model: deepseek/deepseek-v3
+      api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/OPENAI_API_KEY
+litellm_settings:
+  enable_responses_api: true

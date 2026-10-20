@@ -1,0 +1,4 @@
+category,input_mean_bytes,input_p95_bytes,output_mean_bytes,output_p95_bytes,n_calls
+LLM,646.75,909.8,771.25,1744.6999999999996,16
+Model,411.5,431.0,261.0,276.0,8
+e2e,312.0,312.0,1566.0,1907.1,4

@@ -1,0 +1,130 @@
+name: webagent-benchmarking
+
+services:
+  # Only needed for WebArena-Verified tasks; the default MiniWoB++ tasks run
+  # offline. Enable with `COMPOSE_PROFILES=webarena`.
+  shopping-admin:
+    image: am1n3e/webarena-verified-shopping_admin:latest
+    profiles: ["webarena"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--max-time", "300", "http://localhost:80/admin/"]
+      interval: 30s
+      start_period: 180s
+      timeout: 310s
+      retries: 30
+
+  browsergym-service:
+    image: webagent:v1
+    env_file:
+      - "${AGSBENCH_HOME}/agents/webagent/config/.env"
+    environment:
+      WEBAGENT_CHECK_URLS: "${WEBAGENT_CHECK_URLS:-}"
+      WEBAGENT_USE_SCREENSHOT: "${WEBAGENT_USE_SCREENSHOT:-0}"
+    shm_size: "2gb"
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    volumes:
+      - "${AGSBENCH_HOME}/benchmark/data/browser-use-webagent/trajectories:/workspace/webagent/trajectories"
+      - "${AGSBENCH_HOME}/benchmark/data/browser-use-webagent/monitoring:/workspace/webagent/.cache/browsergym"
+      - "${AGSBENCH_HOME}/agents/webagent/config:/workspace/webagent/config:ro"
+      - "${AGSBENCH_HOME}/agents/webagent/scripts/webagent_service.py:/workspace/webagent/scripts/webagent_service.py:ro"
+    command:
+      - bash
+      - -c
+      - |
+        tinyproxy -c /etc/tinyproxy.conf
+        for URL in $${WEBAGENT_CHECK_URLS}; do
+          echo "Checking $${URL}..."
+          until curl -sf --max-time 30 "$${URL}" -o /dev/null; do
+            echo "  $${URL} not ready, retrying in 10s..."
+            sleep 10
+          done
+          echo "  OK"
+        done
+        echo "All services ready"
+        exec python scripts/webagent_service.py
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1902/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
+  browsergym-loadgen:
+    image: agsbench-request:v1
+    environment:
+      FSBENCH_NUM_THREADS: "${WEBAGENT_CONCURRENCY:-1}"
+    volumes:
+      - "./.cache:/data/manifest:ro"
+    working_dir: /workspace
+    command:
+      - "--scenario"
+      - "browser-use"
+      - --endpoint
+      - "http://browsergym-service:1902"
+      - --bm_file_path
+      - "/data/manifest/${WEBAGENT_MANIFEST:-browsergym_data.txt}"
+      - --bm_request_num
+      - "${WEBAGENT_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${WEBAGENT_BM_MODE:-one-by-one}"
+      - --bm_rps
+      - "${WEBAGENT_BM_RPS:-100}"
+      - --max_steps
+      - "${WEBAGENT_MAX_STEPS:-30}"
+    depends_on:
+      browsergym-service:
+        condition: service_healthy
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --housekeeping_interval=5s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+      - --web.enable-lifecycle
+    ports:
+      - "${WEBAGENT_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${WEBAGENT_GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

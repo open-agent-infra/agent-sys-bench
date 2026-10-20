@@ -1,0 +1,16 @@
+service_impl: fastapi
+ip: 127.0.0.1
+port: 8001
+service_list:
+  - module_name: test_app
+    name: compute_total
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: test_app
+    name: compute_total_async
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: test_app
+    name: process_items_parallel
+    ip: 127.0.0.1
+    port: 8001

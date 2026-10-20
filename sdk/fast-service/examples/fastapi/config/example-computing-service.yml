@@ -1,0 +1,16 @@
+service_impl: fastapi
+ip: 127.0.0.1
+port: 8001
+service_list:
+  - module_name: example_app
+    name: compute_total
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: example_app
+    name: redirect_compute
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: example_app
+    name: update_items
+    ip: 127.0.0.1
+    port: 8001

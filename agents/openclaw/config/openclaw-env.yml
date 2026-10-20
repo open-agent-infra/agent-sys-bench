@@ -1,0 +1,37 @@
+# Fast-service config for the env-manager (multi-node v2, runs on <REMOTE_HOST>).
+# Exposes sandbox_create / sandbox_destroy as RPC endpoints on port 1804.
+
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1804
+
+service_list:
+  - module_name: agsbench_openclaw.env_service
+    name: sandbox_create
+    ip: 0.0.0.0
+    port: 1804
+  - module_name: agsbench_openclaw.env_service
+    name: sandbox_destroy
+    ip: 0.0.0.0
+    port: 1804
+  - module_name: agsbench_openclaw.vsandbox_service
+    name: vsandbox_exec
+    ip: 0.0.0.0
+    port: 1804
+  - module_name: agsbench_openclaw.vsandbox_service
+    name: vsandbox_shell
+    ip: 0.0.0.0
+    port: 1804
+  - module_name: agsbench_openclaw.vsandbox_service
+    name: vsandbox_put_file
+    ip: 0.0.0.0
+    port: 1804
+  - module_name: agsbench_openclaw.vsandbox_service
+    name: vsandbox_get_file
+    ip: 0.0.0.0
+    port: 1804
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/openclaw/env

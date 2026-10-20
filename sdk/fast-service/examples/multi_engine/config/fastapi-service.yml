@@ -1,0 +1,21 @@
+service_impl: fastapi
+ip: 0.0.0.0
+port: 12000
+service_list:
+  - module_name: multi_engine_service
+    name: compute_total
+    ip: 0.0.0.0
+    port: 12000
+  - module_name: multi_engine_service
+    name: update_items
+    ip: 0.0.0.0
+    port: 12000
+  - module_name: multi_engine_service
+    name: fastapi_async_cost_benchmark
+    ip: 0.0.0.0
+    port: 12000
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/server/fastapi

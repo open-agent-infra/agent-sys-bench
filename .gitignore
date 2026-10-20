@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+.claude/
+.codegpt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+llm.env
+*.key
+*.pem
+keys/
+
+# Runtime-patched config files (generated from .example templates by
+# scripts/configure-api.sh — contain real API keys, must never be committed)
+agents/rag/config/api-mode/settings.yml
+agents/rag/config/settings-api.yml
+agents/deep-research/config/api-mode/setup/core.service.llm.yaml
+agents/deep-research/config/api-mode/setup/core.service.embedding.yaml
+agents/deep-research/config/api-mode/setup/core.service.search.yaml
+agents/deep-research/config/api-mode/setup/deep_research.langchain_drs.yaml
+agents/deep-research/config/core.service.llm-api.yaml
+agents/hugginggpt/config/settings.yml
+
+# Docker / build caches (also where fast-service writes per-agent runtime output)
+.cache/
+
+# Runtime output directories (auto-created by experiments)
+benchmark/data/
+benchmark/analysis/out/
+runs/
+*.run/
+.run/
+trajectories/
+logs/
+results/
+output/
+predictions/
+preds.json
+snapshots/
+agents/openclaw/sandbox_workspace/*
+!agents/openclaw/sandbox_workspace/.gitkeep
+
+# Monitoring runtime data. Only prometheus.yml and grafana dashboards /
+# provisioning under monitoring/ are source; everything below is written at run time.
+# (`**/` is required: a pattern containing `/` is otherwise anchored to the repo root.)
+**/monitoring/intermediate/
+**/monitoring/server/
+**/monitoring/prometheus/
+**/monitoring/grafana/*.db
+prometheus_data/
+grafana_data/
+
+# Experiment data and generated figures
+*.jsonl
+# HuggingGPT model catalog (model metadata used for model selection)
+!agents/hugginggpt/config/p0_models.jsonl
+*.csv
+*.log
+*.png
+*.pdf
+*.svg
+figures/
+
+# Analysis examples are curated reference output for newcomers — keep them
+# despite the *.csv / *.png rules above.
+!benchmark/analysis/examples/**

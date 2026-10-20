@@ -1,0 +1,11 @@
+agent: mini_sweagent
+output: benchmark/analysis/out/swe-mini-swe-agent
+
+[latency] available=True
+  n=2 mean=268.46s p50=268.46 p90=315.46 p95=321.34
+[breakdown] available=True
+  e2e_mean=275.38s fractions={ LLM:0.90, Sandbox:0.09 }
+[io] available=True
+  categories=['LLM', 'e2e'] n_total=126
+[tokens] available=True
+  totals={'input_tokens': 1235957, 'output_tokens': 23181, 'cache_read_tokens': 1145856, 'reasoning_tokens': 11808} cache_rate=0.927

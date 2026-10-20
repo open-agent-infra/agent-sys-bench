@@ -1,0 +1,5 @@
+request_id,call_id,function_name,category,model,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,reasoning_tokens,total_tokens,cost_usd
+331e4ca2-6bef-4463-b9cf-df76dfaef240,,agsbench_rag.generation.generation,LLM,,139,97,0,0,0,236,0.0
+45b846e6-f2da-4bf2-b03d-a08cc60db703,,agsbench_rag.generation.generation,LLM,,276,269,0,0,0,545,0.0
+331e4ca2-6bef-4463-b9cf-df76dfaef240,,agsbench_rag.generation.normal_generation,LLM,,139,97,0,0,0,236,0.0
+45b846e6-f2da-4bf2-b03d-a08cc60db703,,agsbench_rag.generation.normal_generation,LLM,,276,269,0,0,0,545,0.0

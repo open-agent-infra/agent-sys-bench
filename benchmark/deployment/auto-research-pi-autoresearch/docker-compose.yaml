@@ -1,0 +1,170 @@
+name: pi-autoresearch-benchmarking
+
+services:
+  litellm-proxy:
+    image: litellm-proxy:local
+    container_name: pi-autoresearch-litellm
+    network_mode: host
+    env_file:
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/config/.env"
+    environment:
+      LITELLM_LOG: "INFO"
+      # LiteLLM refuses to start without a master key. pi authenticates with
+      # OPENAI_API_KEY, so reuse it (interpolated from config/.env by 2.run.sh).
+      LITELLM_MASTER_KEY: "${OPENAI_API_KEY}"
+    volumes:
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/config/litellm-config.yaml:/app/config.yaml:ro"
+    command:
+      - litellm
+      - --config
+      - /app/config.yaml
+      - --port
+      - "4000"
+      # host network: only pi-autoresearch-service (same host) needs it.
+      - --host
+      - "127.0.0.1"
+
+  # MLE-bench grader. Holds the private test answers (never mounted into the
+  # agent); serves /validate to the agent and /grade (token) to the runner.
+  pi-autoresearch-grader:
+    image: pi-autoresearch-grader:v1
+    container_name: pi-autoresearch-grader
+    network_mode: host
+    environment:
+      GRADER_HOST: "127.0.0.1"
+      GRADER_PORT: "${PI_AUTORESEARCH_GRADER_PORT:-5005}"
+      GRADER_TOKEN: "${GRADER_TOKEN:?set by scripts/2.run.sh}"
+    volumes:
+      - "./.cache/mlebench/data:/data:ro"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:${PI_AUTORESEARCH_GRADER_PORT:-5005}/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  pi-autoresearch-service:
+    image: pi-autoresearch:v1
+    container_name: pi-autoresearch-service
+    network_mode: host
+    env_file:
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/config/.env"
+    environment:
+      GRADER_URL: "http://127.0.0.1:${PI_AUTORESEARCH_GRADER_PORT:-5005}"
+      GRADER_TOKEN: "${GRADER_TOKEN:?set by scripts/2.run.sh}"
+    # The agent trains its models here; one GPU by default.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${PI_AUTORESEARCH_GPU:-0}"]
+              capabilities: [gpu]
+    shm_size: "${PI_AUTORESEARCH_SHM:-16g}"
+    volumes:
+      - "${AGSBENCH_HOME}/benchmark/data/auto-research-pi-autoresearch/trajectories:/workspace/pi_autoresearch/trajectories"
+      # Public (agent-visible) competition data only.
+      - "./.cache/mlebench/public:/workspace/pi_autoresearch/mlebench-public:ro"
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/config:/workspace/pi_autoresearch/config"
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/scripts/pi_autoresearch_service.py:/workspace/pi_autoresearch/scripts/pi_autoresearch_service.py"
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/config/openai-provider-patch.js:/usr/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/dist/providers/openai.js:ro"
+      - "${AGSBENCH_HOME}/agents/pi-autoresearch/config/models.json:/root/.pi/agent/models.json:ro"
+    command: python scripts/pi_autoresearch_service.py
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1902/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    depends_on:
+      litellm-proxy:
+        condition: service_started
+      pi-autoresearch-grader:
+        condition: service_healthy
+
+  pi-autoresearch-loadgen:
+    image: agsbench-request:v1
+    container_name: pi-autoresearch-loadgen
+    network_mode: host
+    environment:
+      FSBENCH_NUM_THREADS: "${PI_AUTORESEARCH_CONCURRENCY:-1}"
+    volumes:
+      - "./.cache:/workspace/pi_autoresearch/.cache:ro"
+    working_dir: /workspace
+    command:
+      - "--scenario"
+      - "auto-research"
+      - --endpoint
+      - "http://127.0.0.1:1902"
+      - --bm_file_path
+      - "/workspace/pi_autoresearch/.cache/${PI_AUTORESEARCH_MANIFEST:-pi_autoresearch_data.txt}"
+      - --bm_request_num
+      - "${PI_AUTORESEARCH_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${PI_AUTORESEARCH_BM_MODE:-one-by-one}"
+      - --bm_rps
+      - "${PI_AUTORESEARCH_BM_RPS:-1}"
+      - --max_iterations
+      - "${MAX_ITERATIONS:-5}"
+      - --timeout
+      - "${TASK_TIMEOUT:-3600}"
+    depends_on:
+      pi-autoresearch-service:
+        condition: service_healthy
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: pi-autoresearch-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "${PI_AUTORESEARCH_CADVISOR_PORT:-8081}:8080"
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --housekeeping_interval=5s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: pi-autoresearch-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+      - --web.enable-lifecycle
+    ports:
+      - "${PI_AUTORESEARCH_PROMETHEUS_PORT:-9091}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: pi-autoresearch-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${PI_AUTORESEARCH_GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

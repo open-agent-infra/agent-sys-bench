@@ -1,0 +1,3 @@
+request_id,e2e_latency,success,n_steps,n_llm_calls,total_input_tokens,total_output_tokens,total_cost_usd,error
+73609f7f-cfb4-455e-8148-ca971a1bdb7d,67.64773941040039,True,0,2,1888,1345,0.0,
+0d3ea0aa-090c-4acc-b597-b83353f054d3,36.31347060203552,True,0,2,1888,1002,0.0,

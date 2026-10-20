@@ -1,0 +1,131 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agsbench-deep-research"
+version = "0.1.0"
+description = "A modular agent framework"
+authors = [
+    {name = "AgentSysBench contributors"},
+]
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "huggingface_hub==0.24.6",
+    "onnxruntime==1.19.2",
+    "openai==1.55.3",
+    "pymilvus==2.5.10",
+    "sentence_transformers==3.1.0",
+    "transformers==4.44.2",
+    "datasets==3.1.0",
+    "wikipedia==1.4.0",
+    "pymupdf==1.24.12",
+    "bs4==0.0.2",
+    "cohere==5.11.4",
+    "langchain-chroma==0.1.4",
+    "langchain-community==0.3.1",
+    "langchain-core==0.3.15",
+    "langchain-huggingface==0.1.2",
+    "langchain-milvus==0.1.7",
+    "langchain-openai==0.2.2",
+    "langchain-text-splitters==0.3.0",
+    "unstructured==0.16.6",
+    "pyzmq==25.1.2",
+    "py-spy==0.4.0",
+    "pyyaml>=6.0",
+    "factory_boy==3.3.3",
+    "redis==6.2.0",
+    "arxiv==2.2.0",
+    "duckduckgo_search==8.0.4",
+    "exa-py==1.14.9",
+    "linkup-sdk==0.2.6",
+    "markdownify==1.1.0",
+    "markitdown[all]==0.1.2",
+    "firecrawl-py==2.12.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-xdist>=3.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "factory-boy>=3.2.0",
+    "faker>=18.0.0",
+    "responses>=0.23.0",
+    "aioresponses>=0.7.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/open-agent-infra/agent-sys-bench"
+"Bug Tracker" = "https://github.com/open-agent-infra/agent-sys-bench/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-v --cov=src --cov-report=term-missing --cov-report=html --strict-markers"
+testpaths = [
+    "tests",
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests for component interactions",
+    "functional: End-to-end functional tests",
+    "performance: Performance and benchmark tests",
+    "slow: Tests that take a long time to run",
+    "async_test: Async tests requiring special handling",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+precision = 2
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+check_untyped_defs = false

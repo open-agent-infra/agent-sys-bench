@@ -1,0 +1,45 @@
+app_name: "RAG"
+
+# llm settings
+llm_model: "deepseek-v4-pro"
+llm_temperature: 0.0
+llm_top_p: 0.9
+llm_seed: 0
+openai_api_key: "<YOUR_API_KEY>"
+openai_base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+# loading settings
+loading_persistency: "./.cache/loading"
+
+# vdb settings
+# vdb_type: "chromadb"
+# vdb_uri: "http://localhost:8800"
+vdb_type: "milvus"
+vdb_uri: "http://localhost:19530"
+collection_name: "test"
+
+# embedding settings
+# embedding_model: "all-MiniLM-L6-v2"
+# embedding_device: "cuda:3"
+# embedding_model: "http://localhost:17070:::sentence-transformers/all-MiniLM-L6-v2"
+# embedding_device: "Infinity"
+# embedding_model: "http://localhost:18080"
+# embedding_device: "TEI"
+embedding_model: "http://localhost:18000/v1:::Alibaba-NLP/gte-Qwen2-1.5B-instruct"
+embedding_device: "vLLM"
+
+embedding_batch_size: 32
+
+# splitter settings
+splitter_model: "recursive-character-tiktoken"
+chunk_size: 256
+chunk_overlap: 128
+
+# retriever settings
+retriever_type: "VectorStore"
+search_type: "similarity"
+
+generation_method: "normal"
+
+log_level: "DEBUG"
+log_file: ".cache/debug.log"

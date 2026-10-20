@@ -1,0 +1,21 @@
+service_impl: grpc
+ip: 0.0.0.0
+port: 12001
+service_list:
+  - module_name: multi_engine_service
+    name: async_compute_total
+    ip: 0.0.0.0
+    port: 12001
+  - module_name: multi_engine_service
+    name: get_items
+    ip: 0.0.0.0
+    port: 12001
+  - module_name: multi_engine_service
+    name: grpc_async_cost_benchmark
+    ip: 0.0.0.0
+    port: 12001
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/server/grpc

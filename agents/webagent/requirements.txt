@@ -1,0 +1,12 @@
+browsergym-core>=0.14.0
+browsergym-miniwob>=0.14.0
+gymnasium>=1.0.0
+playwright
+openai>=1.50.0
+pandas>=2.3.0
+pyyaml>=6.0
+pydantic>=2
+browsergym-webarena>=0.14.0
+browsergym-webarena-verified>=0.14.0
+starlette>=0.37.2,<0.39.0
+fastapi>=0.114.0,<0.115.0

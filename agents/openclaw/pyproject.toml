@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agsbench-openclaw"
+version = "0.1.0"
+description = "fast-service-instrumented LLM proxy + workload driver for running WildClawBench tasks through openclaw"
+authors = [
+    { name = "AgentSysBench contributors" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}

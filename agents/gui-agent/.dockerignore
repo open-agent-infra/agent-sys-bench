@@ -1,0 +1,3 @@
+# VM disk (~24 GB) lives here by default; keep it out of the build context.
+.cache/vm
+.cache/osworld-*.tar.gz

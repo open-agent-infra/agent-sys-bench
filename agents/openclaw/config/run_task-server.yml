@@ -1,0 +1,29 @@
+# fast-service config for the workload driver. Mirrors the LLM proxy's
+# local_function setup — all run_task functions execute in-process and
+# emit timing CSVs to ./.cache/openclaw/run_task/.
+
+service_impl: local_function
+ip: 127.0.0.1
+port: 1802
+service_list:
+  - module_name: agsbench_openclaw.run_task
+    name: load_task
+    ip: 127.0.0.1
+    port: 1802
+  - module_name: agsbench_openclaw.run_task
+    name: prepare_workspace
+    ip: 127.0.0.1
+    port: 1802
+  - module_name: agsbench_openclaw.run_task
+    name: launch_openclaw
+    ip: 127.0.0.1
+    port: 1802
+  - module_name: agsbench_openclaw.run_task
+    name: collect_outputs
+    ip: 127.0.0.1
+    port: 1802
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/openclaw/run_task

@@ -1,0 +1,3 @@
+category,input_mean_bytes,input_p95_bytes,output_mean_bytes,output_p95_bytes,n_calls
+LLM,57729.805555555555,85441.5,1143.611111111111,4900.25,72
+Sandbox,0.0,0.0,648.175,2978.1,40

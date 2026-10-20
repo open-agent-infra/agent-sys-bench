@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+  external_labels:
+    bench: claude
+
+scrape_configs:
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['claude-cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: '^$'
+        action: drop
+      - source_labels: [name]
+        regex: '(claude-(service|loadgen|cadvisor|prometheus|grafana))'
+        action: keep
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

@@ -1,0 +1,37 @@
+# LLM Service Configuration
+
+default_model: "deepseek-v4-pro"
+
+instances:
+  - name: "dashscope:deepseek-v4-pro:1"
+    location: "dashscope.aliyuncs.com/compatible-mode/v1"
+    model: "deepseek-v4-pro"
+    api_key: "<YOUR_API_KEY>"
+
+  - name: "vllm:Qwen2.5-1.5B-Instruct:1"
+    location: "127.0.0.1:8007"
+    model: "Qwen/Qwen2.5-1.5B-Instruct"
+    api_key: "EMPTY"
+    enabled: false
+
+  - name: "vllm:Qwen3-8B:1"
+    location: "127.0.0.1:8008"
+    model: "Qwen/Qwen3-8B"
+    api_key: "EMPTY"
+    enabled: false
+
+  - name: "vllm:gemma-3-1b-it:1"
+    location: "127.0.0.1:8001"
+    model: "google/gemma-3-1b-it"
+    api_key: "EMPTY"
+    enabled: false
+
+  - name: "anthropic:claude"
+    location: "api.anthropic.com"
+    model: "claude-3-sonnet-20240229"
+    enabled: false
+
+# Global settings
+timeout: 30
+max_tokens: 4096
+temperature: 0.7

@@ -1,0 +1,16 @@
+client_mode: True
+service_impl: fastapi
+service_list:
+  - module_name: agsbench_webagent.request
+    name: solve_task
+    ip: browsergym-service
+    port: 1902
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/browsergym/client
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: ./.cache/browsergym/intermediate/client

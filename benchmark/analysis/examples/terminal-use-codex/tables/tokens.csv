@@ -1,0 +1,2 @@
+request_id,call_id,function_name,category,model,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,reasoning_tokens,total_tokens,cost_usd
+hello-world,,codex_turn,LLM,,23818,181,16384,0,55,0,0.0

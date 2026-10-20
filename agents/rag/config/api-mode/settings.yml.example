@@ -1,0 +1,57 @@
+##############################################################################
+# RAG Agent -- API Mode Settings (default config)
+#
+# This configuration uses remote OpenAI-compatible APIs (e.g., DashScope)
+# for LLM and embedding instead of local vLLM GPU services.
+#
+# Replace YOUR_OPENAI_API_KEY_HERE with your actual API key, or set OPENAI_API_KEY
+# env var and run configure-api.sh to auto-populate.
+##############################################################################
+
+app_name: "RAG"
+
+# ----- LLM settings (remote API) -----
+llm_model: "deepseek-v4-pro"
+llm_temperature: 0.0
+llm_top_p: 0.9
+llm_seed: 0
+openai_api_key: "YOUR_OPENAI_API_KEY_HERE"
+openai_base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+# ----- Situating LLM settings (remote API) -----
+situating_llm_model: "deepseek-v4-pro"
+situating_llm_temperature: 0.0
+situating_llm_top_p: 0.9
+situating_llm_seed: 0
+situating_device: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+situating_api_key: "YOUR_OPENAI_API_KEY_HERE"
+situating_batch_size: 8
+
+# ----- Loading settings -----
+loading_persistency: "./.cache/loading"
+
+# ----- VDB settings -----
+vdb_type: "milvus"
+vdb_uri: "http://milvus-service:19530"
+collection_name: "test"
+
+# ----- Embedding settings (remote API) -----
+embedding_model: "https://dashscope.aliyuncs.com/compatible-mode/v1:::text-embedding-v3"
+embedding_device: "vLLM"
+embedding_batch_size: 32
+
+# ----- Splitter settings -----
+splitter_model: "recursive-character-tiktoken"
+chunk_size: 256
+chunk_overlap: 128
+
+# ----- Retriever settings -----
+retriever_type: "VectorStore"
+search_type: "similarity"
+
+# ----- Generation settings -----
+generation_method: "normal"
+
+# ----- Logging -----
+log_level: "DEBUG"
+log_file: ".cache/debug.log"

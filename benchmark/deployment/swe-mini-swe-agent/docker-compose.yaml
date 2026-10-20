@@ -1,0 +1,158 @@
+name: mini-swe-benchmarking
+
+services:
+  mini-sweagent-service:
+    image: mini-swe-agent:v1
+    container_name: mini-sweagent-service
+    # In multi-node mode the orchestrator dials the env host through an
+    # SSH tunnel bound to this docker host (the env host's firewall blocks
+    # inbound on the env port). `host.docker.internal` resolves to the
+    # docker bridge gateway via host-gateway, so MINI_SWE_ENV_HOST can
+    # safely default to "host.docker.internal" inside the container.
+    # In single-host mode the extra_hosts entry is harmless.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Debug aid: lets `py-spy dump` attach to the orchestrator's Python
+    # process to capture a live stack if a worker thread ever wedges. The
+    # container is otherwise unprivileged; SYS_PTRACE only enables ptrace of
+    # processes inside this same container, so the blast radius is nil.
+    cap_add:
+      - SYS_PTRACE
+    env_file:
+      - "${AGSBENCH_HOME}/agents/mini-swe-agent/config/.env"
+    environment:
+      MSWEA_SILENT_STARTUP: "1"
+      # === Single-host knobs (ignored in multi-node mode) ==================
+      # cpuset/memory pool consumed by the in-process DockerEnvironment.
+      # When MINI_SWE_REMOTE_ENV=1 these stay unused — the env host owns
+      # the pool — and you should configure them in the env compose instead.
+      MINI_SWE_CPUSETS: "${MINI_SWE_CPUSETS:-0-1,2-3,4-5,6-7}"
+      MINI_SWE_MEMORY: "${MINI_SWE_MEMORY:-4g}"
+      # === Multi-node mode ================================================
+      # When MINI_SWE_REMOTE_ENV is "1", runner.py constructs RemoteEnv
+      # objects that forward execute()/cleanup() to the env host listening
+      # at MINI_SWE_ENV_HOST:MINI_SWE_ENV_PORT. The same host:port is read
+      # by config_loader.py to expand ${MINI_SWE_ENV_HOST} placeholders in
+      # agsbench_mini_swe_agent-server.yml's service_list. Default empty → single-host.
+      MINI_SWE_REMOTE_ENV: "${MINI_SWE_REMOTE_ENV:-}"
+      MINI_SWE_ENV_HOST: "${MINI_SWE_ENV_HOST:-127.0.0.1}"
+      MINI_SWE_ENV_PORT: "${MINI_SWE_ENV_PORT:-1802}"
+    volumes:
+      # Host docker socket is only used in single-host mode (RemoteEnv
+      # does no local docker work). Mounting it unconditionally is harmless
+      # and avoids two compose files.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${AGSBENCH_HOME}/benchmark/data/swe-mini-swe-agent/trajectories:/workspace/agsbench_mini_swe_agent/trajectories"
+      - "${AGSBENCH_HOME}/benchmark/data/swe-mini-swe-agent/traces:/workspace/agsbench_mini_swe_agent/traces"
+      - "${AGSBENCH_HOME}/agents/mini-swe-agent/.cache:/workspace/agsbench_mini_swe_agent/.cache"
+      - "${AGSBENCH_HOME}/agents/mini-swe-agent/config:/workspace/agsbench_mini_swe_agent/config"
+      - "${AGSBENCH_HOME}/agents/mini-swe-agent/scripts/mini_swe_service.py:/workspace/agsbench_mini_swe_agent/scripts/mini_swe_service.py"
+    command: python scripts/mini_swe_service.py
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:1801/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
+  mini-sweagent-loadgen:
+    image: agsbench-request:v1
+    container_name: mini-sweagent-loadgen
+    environment:
+      FSBENCH_NUM_THREADS: "${MINI_SWEAGENT_CONCURRENCY:-4}"
+    volumes:
+      # Manifest written by scripts/1.prepare_data.sh
+      - "./.cache:/data/manifest:ro"
+    working_dir: /workspace
+    command:
+      - --scenario
+      - "swe"
+      - --endpoint
+      - "http://mini-sweagent-service:1801"
+      - --bm_file_path
+      - "/data/manifest/${MINI_SWEAGENT_MANIFEST:-mini_swe_agent_data.txt}"
+      - --bm_request_num
+      - "${MINI_SWEAGENT_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${MINI_SWEAGENT_BM_MODE:-one-by-one}"
+      - --bm_rps
+      - "${MINI_SWEAGENT_BM_RPS:-100}"
+    depends_on:
+      mini-sweagent-service:
+        condition: service_healthy
+
+  # === Resource monitoring stack ============================================
+  # cAdvisor + Prometheus + Grafana. cAdvisor reads every container on the
+  # host docker daemon (cheap, single process), and Prometheus's
+  # metric_relabel_configs in monitoring/prometheus.yml drops every series
+  # whose `name` label is not one of our mini-sweagent-*/minisweagent-*
+  # containers. So the time-series store contains ONLY our benchmark, even
+  # though unrelated containers (webarena, shopping_admin, ...) are running
+  # on this host.
+  #
+  # Prometheus data is bind-mounted to ./monitoring/
+  # prometheus_data so it survives `5.cleanup.sh` and can be re-mounted
+  # later for offline analysis. scripts/7.snapshot_monitoring.sh creates
+  # a portable tarball via the Prometheus admin snapshot API.
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    # Prefix with mini-sweagent- so we don't collide with other benchmark
+    # stacks (e.g. os-world) that also use bare names like `cadvisor`.
+    container_name: mini-sweagent-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --housekeeping_interval=5s
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: mini-sweagent-prometheus
+    # Same rationale as mini-sweagent-service: in multi mode the remote
+    # cAdvisor lives behind an SSH tunnel bound to host.docker.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-admin-api
+      - --web.enable-lifecycle
+    ports:
+      - "${MINI_SWEAGENT_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: mini-sweagent-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${MINI_SWEAGENT_GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

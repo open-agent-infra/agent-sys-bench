@@ -1,0 +1,28 @@
+# Fast-service server config for the openclaw task runner (compose mode).
+# Exposes run_task as an RPC endpoint on port 1803.
+#
+# In multi-v2 mode, also includes env-manager client stubs pointing at
+# the remote env-manager via SSH tunnel (env vars expanded by config_loader).
+
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1803
+
+service_list:
+  - module_name: agsbench_openclaw.run_task
+    name: run_task
+    ip: 0.0.0.0
+    port: 1803
+  - module_name: agsbench_openclaw.env_service
+    name: sandbox_create
+    ip: ${OPENCLAW_ENV_HOST:-127.0.0.1}
+    port: ${OPENCLAW_ENV_PORT:-1804}
+  - module_name: agsbench_openclaw.env_service
+    name: sandbox_destroy
+    ip: ${OPENCLAW_ENV_HOST:-127.0.0.1}
+    port: ${OPENCLAW_ENV_PORT:-1804}
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/openclaw/server

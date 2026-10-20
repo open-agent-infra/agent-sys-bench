@@ -1,0 +1,85 @@
+# report_structure: default # use default structure
+max_search_depth: 2
+number_of_queries: 2
+include_source_str: false
+timeout: 3600
+search_api: "firecrawl"
+# search_api: "searxng"
+# search_api: "serper"
+# search_api: "linkup"
+# search_api: "exa"
+# search_api: "tavily"
+# search_api: "wiki"
+search_api_config:
+  max_results: 5
+  # You can add more search API specific configurations here if needed
+  # e.g., api_key: ${TAVILY_API_KEY}
+  #       region: "us-west-1"
+max_tokens_per_source: 5000
+include_raw_content: true
+deduplication_strategy: "keep_first"
+writer_model: "${LEGOAGENT_DEFAULT_LLM:-deepseek-v4-pro}"
+planner_model: "${LEGOAGENT_DEFAULT_LLM:-deepseek-v4-pro}"
+summarization_model: "${LEGOAGENT_DEFAULT_LLM:-deepseek-v4-pro}"
+writer_model_kwargs:
+  max_tokens: null
+  temperature: 0.6
+  seed: 0
+  extra_gen_kwargs:
+    top_p: 0.95
+    top_k: 20
+    min_p: 0
+planner_model_kwargs:
+  max_tokens: 8192
+  temperature: 0.6
+  seed: 0
+  extra_gen_kwargs:
+    top_p: 0.95
+    top_k: 20
+    min_p: 0
+summarization_model_kwargs:
+  max_tokens: 2048
+  temperature: 0.6
+  seed: 0
+  extra_gen_kwargs:
+    top_p: 0.95
+    top_k: 20
+    min_p: 0
+parallelize_sections: true
+search_post_processing:
+  operation: "summarize"
+  max_char_to_include: 30_000
+  splitting_model: "langchain-recursive-character"
+  chunk_size: 1500
+  chunk_overlap: 200
+  embedding_model: "${LEGOAGENT_DEFAULT_EMBEDDING:-jinaai/jina-embeddings-v3}"
+  vdb_collection: "deep_research_langchain_drs"
+  vdb_topk: 5
+  summarize_after_rerank: false
+  parallelize_summarization: true
+  parallelize_split_and_rerank: true
+# Optional: You can specify a custom report structure
+# report_structure:
+#   - title: "Introduction"
+#     content: "This is the introduction section."
+#   - title: "Methodology"
+#     content: "This section describes the methodology used in the research."
+#   - title: "Results"
+#     content: "This section presents the results of the research."
+#   - title: "Conclusion"
+#     content: "This is the conclusion of the research."
+#   - title: "References"
+#     content: "This section lists the references used in the research."
+#   - title: "Appendix"
+#     content: "This section contains additional information or data that supports the research."
+# You can also specify a custom report structure using the `report_structure` key.
+# The structure can be a list of dictionaries, each containing a title and content.
+# If `report_structure` is set to null, the default structure will be used.
+# If you want to use a custom report structure, uncomment the `report_structure` section above
+# and modify it according to your needs.
+# The `report_structure` can include sections like "Introduction", "Methodology", "Results",
+# "Conclusion", "References", and "Appendix". Each section can have its own content.
+# The content can be a string or a list of strings, depending on how you want to
+# structure your report.
+# If you want to use the default report structure, you can set `report_structure` to
+# null or simply omit it from the configuration file.

@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # allow a direct connection from container to the local machine
+    volumes:
+      - ${PWD}/config/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "13000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+
+  dcgm-exporter:
+    image: nvidia/dcgm-exporter:latest
+    container_name: dcgm-exporter
+    runtime: nvidia
+    ports:
+      - "9400:9400"
+    restart: unless-stopped
+
+volumes:
+  grafana-storage:

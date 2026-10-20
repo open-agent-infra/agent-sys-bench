@@ -1,0 +1,104 @@
+name: gui-agent-benchmarking
+
+services:
+  os-world-service:
+    image: gui-agent:v1
+    container_name: os-world-service
+    env_file:
+      - "${AGSBENCH_HOME}/agents/gui-agent/config/.env"
+    environment:
+      # HF_ENDPOINT is read by desktop-env to redirect the ~11 GB Ubuntu
+      # qcow2 VM download to a reachable mirror. Sourced from the deployment
+      # .env (or shell) so the documented "set HF_ENDPOINT in .env" works.
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+    devices:
+      - /dev/kvm:/dev/kvm
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${AGSBENCH_HOME}/benchmark/data/computer-use-gui-agent/trajectories:/workspace/agsbench_gui_agent/trajectories"
+      - "${AGSBENCH_HOME}/benchmark/data/computer-use-gui-agent/traces:/workspace/agsbench_gui_agent/traces"
+      - "${AGSBENCH_HOME}/agents/gui-agent/.cache:/workspace/agsbench_gui_agent/.cache"
+      - "${AGSBENCH_HOME}/agents/gui-agent/config:/workspace/agsbench_gui_agent/config:ro"
+      - "${AGSBENCH_HOME}/agents/gui-agent/scripts/os_world_service.py:/workspace/agsbench_gui_agent/scripts/os_world_service.py"
+      # NOTE: the gui-agent image bakes in patches/osworld-provider-patch.py at
+      # build time (localhost→host.docker.internal, privileged, timeout=600s,
+      # port bump, Chrome CDP fixes). Do NOT mount a custom provider.py/manager.py
+      # here — that would overwrite the baked-in patches and lose those fixes.
+      - "${AGSBENCH_HOME}/agents/gui-agent/src:/workspace/agsbench_gui_agent/src:ro"
+      - "${OS_WORLD_DATA_DIR:-${AGSBENCH_HOME}/agents/gui-agent/.cache/vm}:${OS_WORLD_DATA_DIR:-${AGSBENCH_HOME}/agents/gui-agent/.cache/vm}"
+    working_dir: ${OS_WORLD_DATA_DIR:-${AGSBENCH_HOME}/agents/gui-agent/.cache/vm}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: python /workspace/agsbench_gui_agent/scripts/os_world_service.py
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:1904/docs')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
+  os-world-loadgen:
+    image: agsbench-request:v1
+    container_name: os-world-loadgen
+    environment:
+      FSBENCH_NUM_THREADS: "${OS_WORLD_CONCURRENCY:-1}"
+    volumes:
+      - "./.cache:/data/manifest:ro"
+    working_dir: /workspace
+    command:
+      - --scenario
+      - "computer-use"
+      - --endpoint
+      - "http://os-world-service:1904"
+      - --bm_file_path
+      - "/data/manifest/${OS_WORLD_MANIFEST:-os_world_data.txt}"
+      - --bm_request_num
+      - "${OS_WORLD_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${OS_WORLD_BM_MODE:-one-by-one}"
+      - --max_steps
+      - "${OS_WORLD_MAX_STEPS:-15}"
+      - --observation_type
+      - "${OS_WORLD_OBSERVATION_TYPE:-a11y_tree}"
+    depends_on:
+      os-world-service:
+        condition: service_healthy
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker/:ro
+      - /dev/disk/:/dev/disk/:ro
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    ports:
+      - "${OS_WORLD_PROMETHEUS_PORT:-9094}:9090"
+    volumes:
+      - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "prometheus-data:/prometheus"
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+    ports:
+      - "${OS_WORLD_GRAFANA_PORT:-3003}:3000"
+    volumes:
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - "grafana-data:/var/lib/grafana"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

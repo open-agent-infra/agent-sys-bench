@@ -1,0 +1,88 @@
+##############################################################################
+# RAG Benchmark -- API Mode (no local GPU required)
+#
+# Self-contained compose file — no includes or extends. Uses DashScope or
+# any OpenAI-compatible API for LLM and embedding. Only needs Milvus locally.
+#
+# Usage:
+#   # 1. Run scripts/setup.sh and scripts/configure-api.sh first
+#   # 2. bash scripts/1.prepare_data.sh && bash scripts/2.run.sh
+##############################################################################
+name: rag-benchmarking-api
+
+services:
+  milvus-service:
+    image: milvusdb/milvus:v2.5.3
+    container_name: milvus-service
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: "/var/lib/milvus/etcd"
+      COMMON_STORAGETYPE: "local"
+    volumes:
+      - milvus-data:/var/lib/milvus
+      - ${AGSBENCH_HOME}/agents/rag/config/milvus/embedEtcd.yaml:/milvus/configs/embedEtcd.yaml:ro
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 10s
+      start_period: 30s
+      timeout: 10s
+      retries: 10
+
+  rag-service:
+    image: rag:v1
+    container_name: rag-coordinator
+    volumes:
+      - ./.cache:/data/qa:ro
+      - rag-cache:/cache
+      - ${AGSBENCH_HOME}/agents/rag/config/api-mode:/config
+      - ${AGSBENCH_HOME}/benchmark/data/qa-rag/runs/results/server:/output
+    env_file:
+      - ${AGSBENCH_HOME}/agents/rag/config/.env
+    environment:
+      TIKTOKEN_CACHE_DIR: /cache/tiktok
+    command: >
+      python /workspace/rag/scripts/launch_services.py
+      --config /config/server.yml
+      --settings /config/settings.yml
+    ports:
+      - "20000:20000"
+    depends_on:
+      milvus-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:20000/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  rag-loadgen:
+    image: agsbench-request:v1
+    container_name: rag-loadgen
+    volumes:
+      - ./.cache:/data/qa:ro
+    working_dir: /workspace
+    command:
+      - --scenario
+      - "qa"
+      - --endpoint
+      - "http://rag-coordinator:20000"
+      - --bm_file_path
+      - "/data/qa/natural_questions.txt"
+      - --doc_root
+      - "/data/qa"
+      - --bm_request_num
+      - "${RAG_REQUEST_NUM:-1}"
+      - --bm_mode
+      - "${RAG_BM_MODE:-one-by-one}"
+    depends_on:
+      rag-service:
+        condition: service_healthy
+
+volumes:
+  milvus-data:
+  rag-cache:

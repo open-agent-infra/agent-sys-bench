@@ -1,0 +1,16 @@
+datasets==3.1.0
+huggingface_hub==0.24.6
+numpy==1.26.4
+onnxruntime==1.19.2
+Pillow==11.1.0
+pydantic==2.10.6
+pydantic_settings==2.7.1
+pymilvus==2.4.6
+PyYAML==6.0.2
+PyYAML==6.0.2
+Requests==2.32.3
+setuptools==75.1.0
+soundfile==0.12.1
+tqdm==4.66.6
+uvicorn==0.34.0
+httpx<0.28

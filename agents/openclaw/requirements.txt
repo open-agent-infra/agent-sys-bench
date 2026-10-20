@@ -1,0 +1,7 @@
+# Python deps for the openclaw integration. fast-service itself is installed
+# from /data/agent-sys-bench via `pip install -e .`.
+fastapi[standard]>=0.114
+uvicorn[standard]>=0.29
+httpx>=0.27
+pydantic>=2.6
+pyyaml>=6

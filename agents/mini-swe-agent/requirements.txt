@@ -1,0 +1,11 @@
+mini-swe-agent>=2.3.0
+swebench>=4.0.3
+datasets>=3.6.0
+docker>=7.1.0
+pandas>=2.3.0
+pyyaml>=6.0
+pydantic>=2
+# litellm>=1.106 imports `mcp` on tool-calling completions but does not depend on it
+mcp>=1.0
+# keep starlette compatible with fast-service's fastapi==0.114.2 (mcp pulls newer)
+starlette<0.39

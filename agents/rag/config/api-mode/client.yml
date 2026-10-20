@@ -1,0 +1,20 @@
+client_mode: True
+service_impl: fastapi
+service_list:
+  - module_name: agsbench_rag.rag_e2e
+    name: naive_rag
+    ip: rag-coordinator
+    port: 20000
+  - module_name: agsbench_rag.rag_e2e
+    name: advanced_rag
+    ip: rag-coordinator
+    port: 20000
+  - module_name: agsbench_rag.rag_e2e
+    name: dynamic_rag
+    ip: rag-coordinator
+    port: 20000
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/monitor/rag_client

@@ -1,0 +1,29 @@
+service_impl: fastapi
+ip: 0.0.0.0
+port: 7090
+service_list:
+  - module_name: naive_rag
+    name: indexing
+    ip: 0.0.0.0
+    port: 7090
+  - module_name: naive_rag
+    name: rag_chat
+    ip: 0.0.0.0
+    port: 7090
+  - module_name: naive_rag
+    name: undo_indexing
+    ip: 0.0.0.0
+    port: 7090
+  - module_name: naive_rag
+    name: drop_collection
+    ip: 0.0.0.0
+    port: 7090
+  - module_name: naive_rag
+    name: rag_e2e
+    ip: 0.0.0.0
+    port: 7090
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/monitor/naive_rag

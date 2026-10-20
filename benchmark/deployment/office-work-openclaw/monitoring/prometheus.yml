@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+  external_labels:
+    bench: openclaw
+
+scrape_configs:
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['openclaw-cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: '^$'
+        action: drop
+      - source_labels: [name]
+        regex: '(openclaw-(service|loadgen|llm-proxy|search-proxy|cadvisor|prometheus|grafana)|openclaw-sandbox-.*)'
+        action: keep
+
+  - job_name: cadvisor-env
+    static_configs:
+      - targets: ['host.docker.internal:8082']  # OPENCLAW_REMOTE_CADVISOR
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: '^$'
+        action: drop
+      - source_labels: [name]
+        regex: '(openclaw-service|openclaw-sandbox-.*|cadvisor-env)'
+        action: keep
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

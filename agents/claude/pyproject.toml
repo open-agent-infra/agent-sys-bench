@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agsbench-claude"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.6",
+    "pyyaml>=6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["agsbench_claude*"]

@@ -1,0 +1,17 @@
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1906
+service_list:
+  - module_name: agsbench_gui_agent.llm_request
+    name: llm_call
+    ip: 0.0.0.0
+    port: 1906
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: /workspace/os_world/monitoring/os-world-llm-proxy
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: /workspace/intermediate/os-world-llm-proxy

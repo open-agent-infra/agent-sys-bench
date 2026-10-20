@@ -1,0 +1,7 @@
+desktop-env==1.0.2
+openai>=1.50.0
+# desktop-env pins pandas~=2.0.3; defer to it.
+pandas
+pyyaml>=6.0
+pydantic>=2
+oss2

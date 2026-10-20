@@ -1,0 +1,10 @@
+huggingface_hub==0.24.6
+langchain_community==0.3.1
+langchain_core==0.3.7
+langchain_text_splitters==0.3.0
+onnxruntime==1.19.2
+openai==1.51.0
+pymilvus==2.4.6
+sentence_transformers==3.1.0
+transformers==4.44.2
+pymupdf

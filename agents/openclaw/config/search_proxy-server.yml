@@ -1,0 +1,35 @@
+# fast-service config for the Firecrawl-backed kimi-shape search proxy.
+#
+# Mirror llm_proxy-server.yml: local_function mode (the proxy's own
+# FastAPI serves the HTTP endpoint on port 1802), monitor + intermediate
+# both on. Per-call query+results land under .cache/openclaw/search_proxy/.
+
+service_impl: local_function
+ip: 127.0.0.1
+port: 1802
+service_list:
+  - module_name: agsbench_openclaw.search_proxy
+    name: parse_search_request
+    ip: 127.0.0.1
+    port: 1802
+  - module_name: agsbench_openclaw.search_proxy
+    name: fetch_from_firecrawl
+    ip: 127.0.0.1
+    port: 1802
+  - module_name: agsbench_openclaw.search_proxy
+    name: record_search_usage
+    ip: 127.0.0.1
+    port: 1802
+  - module_name: agsbench_openclaw.search_proxy
+    name: archive_search
+    ip: 127.0.0.1
+    port: 1802
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/openclaw/search_proxy
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: ./.cache/openclaw/search_proxy/intermediate

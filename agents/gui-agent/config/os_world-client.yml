@@ -1,0 +1,16 @@
+client_mode: True
+service_impl: fastapi
+service_list:
+  - module_name: agsbench_gui_agent.request
+    name: solve_task
+    ip: os-world-service
+    port: 1904
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: /workspace/os_world/monitoring/os-world-loadgen
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: /workspace/intermediate/os-world-loadgen

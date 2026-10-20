@@ -1,0 +1,47 @@
+# fast-service config for the openclaw LLM proxy.
+#
+# We run in "local_function" mode: fast-service does NOT host the FastAPI
+# endpoints (the proxy's own FastAPI app does that on port 1801). Instead,
+# fast-service times the decorated parse_request / forward_to_upstream /
+# record_per_call_usage calls in-process and writes the standard
+# e2e_delay.csv / remote_delay.csv telemetry to monitor_storage.store_dir.
+
+service_impl: local_function
+ip: 127.0.0.1
+port: 1801
+service_list:
+  - module_name: agsbench_openclaw.llm_proxy
+    name: parse_request
+    ip: 127.0.0.1
+    port: 1801
+  - module_name: agsbench_openclaw.llm_proxy
+    name: forward_to_upstream
+    ip: 127.0.0.1
+    port: 1801
+  - module_name: agsbench_openclaw.llm_proxy
+    name: record_per_call_usage
+    ip: 127.0.0.1
+    port: 1801
+  - module_name: agsbench_openclaw.llm_proxy
+    name: archive_messages
+    ip: 127.0.0.1
+    port: 1801
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/openclaw/llm_proxy
+
+# store_intermediate: True asks fast-service to serialize every decorated
+# function's *args + return value* to JSON on disk, in addition to the
+# CSV timing data above. For the proxy, this captures the full request
+# body (system prompt + messages array + tools schema) and the full
+# response body (choices + content + reasoning_content + usage) per call,
+# under intermediate_storage.store_dir/requests/ and /responses/.
+#
+# These files together preserve the entire conversation including each
+# turn's exact prompt and completion text — useful for offline analysis,
+# replaying runs against a different model, or auditing model outputs.
+store_intermediate: True
+intermediate_storage:
+  store_dir: ./.cache/openclaw/llm_proxy/intermediate

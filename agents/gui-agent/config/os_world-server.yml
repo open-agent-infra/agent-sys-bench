@@ -1,0 +1,17 @@
+service_impl: fastapi
+ip: 0.0.0.0
+port: 1904
+service_list:
+  - module_name: agsbench_gui_agent.request
+    name: solve_task
+    ip: 0.0.0.0
+    port: 1904
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: /workspace/agsbench_gui_agent/traces/monitoring/os-world-service
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: /workspace/agsbench_gui_agent/traces/intermediate/os-world-service

@@ -1,0 +1,21 @@
+service_impl: fastapi
+ip: 127.0.0.1
+port: 8000
+service_list:
+  - module_name: example_app
+    name: multi_file_compute
+    ip: 127.0.0.1
+    port: 8001
+  - module_name: example_app
+    name: redirect_compute
+    ip: 127.0.0.1
+    port: 8000
+
+monitor: True
+monitor_storage:
+  type: csv
+  store_dir: ./.cache/internal
+
+store_intermediate: True
+intermediate_storage:
+  store_dir: ./.cache/internal/intermediate
